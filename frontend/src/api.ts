@@ -1,7 +1,13 @@
 import type { SearchParams, SearchResponse } from './types'
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') ?? 'http://localhost:8000'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '')
+
+const buildEndpoint = (path: string) => {
+  if (API_BASE_URL) {
+    return `${API_BASE_URL}${path}`
+  }
+  return `/.netlify/functions${path}`
+}
 
 const buildQueryString = (params: SearchParams): string => {
   const searchParams = new URLSearchParams()
@@ -16,7 +22,7 @@ const buildQueryString = (params: SearchParams): string => {
 }
 
 export const searchVoters = async (params: SearchParams): Promise<SearchResponse> => {
-  const response = await fetch(`${API_BASE_URL}/api/voters${buildQueryString(params)}`)
+  const response = await fetch(`${buildEndpoint('/search')}${buildQueryString(params)}`)
   if (!response.ok) {
     throw new Error('Unable to fetch voter data. Please try again.')
   }
@@ -24,7 +30,7 @@ export const searchVoters = async (params: SearchParams): Promise<SearchResponse
 }
 
 export const fetchMeta = async (): Promise<{ total_records: number }> => {
-  const response = await fetch(`${API_BASE_URL}/api/meta`)
+  const response = await fetch(buildEndpoint('/meta'))
   if (!response.ok) {
     throw new Error('Unable to fetch dataset metadata.')
   }

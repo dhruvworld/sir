@@ -1,0 +1,13 @@
+[build]
+  command = "cd frontend && npm install && npm run build"
+  publish = "frontend/dist"
+  functions = "netlify/functions"
+
+[[functions]]
+  path = "search"
+  included_files = ["data/city_route.json"]
+
+[[functions]]
+  path = "meta"
+  included_files = ["data/city_route.json"]
+
