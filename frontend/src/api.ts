@@ -51,9 +51,11 @@ export const logSearchEvent = async (payload: SearchLogPayload): Promise<void> =
 
 export const fetchSearchLogs = async (password: string): Promise<SearchLogEntry[]> => {
   const response = await fetch(buildEndpoint('/get-logs'), {
+    method: 'POST',
     headers: {
-      'x-admin-pass': password,
+      'Content-Type': 'application/json',
     },
+    body: JSON.stringify({ pass: password }),
   })
 
   if (response.status === 401) {

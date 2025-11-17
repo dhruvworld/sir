@@ -6,19 +6,28 @@ const MAX_ENTRIES = 200
 
 const store = getStore({ name: 'search-logs' })
 
+const parseBody = (body: string | null): { pass?: string } | null => {
+  if (!body) return null
+  try {
+    return JSON.parse(body)
+  } catch {
+    return null
+  }
+}
+
 export const handler: Handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 204,
       headers: {
         'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Content-Type,x-admin-pass',
-        'Access-Control-Allow-Methods': 'GET,OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Methods': 'POST,OPTIONS',
       },
     }
   }
 
-  if (event.httpMethod !== 'GET') {
+  if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
       headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
@@ -26,9 +35,8 @@ export const handler: Handler = async (event) => {
     }
   }
 
-  const providedPass =
-    Object.entries(event.headers || {}).find(([key]) => key.toLowerCase() === 'x-admin-pass')?.[1] ||
-    ''
+  const payload = parseBody(event.body ?? '')
+  const providedPass = payload?.pass ?? ''
 
   if (providedPass !== ADMIN_PASS) {
     return {
