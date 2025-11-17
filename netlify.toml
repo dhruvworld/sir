@@ -12,3 +12,9 @@
 [functions.meta]
   included_files = ["data/city_route.json"]
 
+[[redirects]]
+  from = "/logs"
+  to = "/index.html"
+  status = 200
+  force = true
+
