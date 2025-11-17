@@ -4,11 +4,7 @@ import type { SearchParams, SearchResponse } from '../types'
 
 const defaultParams: SearchParams = {
   pass: '',
-  name: '',
-  relative_name: '',
   q: '',
-  epic_no: '',
-  house_no: '',
 }
 
 export const useVoterSearch = () => {

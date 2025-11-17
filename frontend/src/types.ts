@@ -24,10 +24,6 @@ export interface SearchResponse {
 
 export interface SearchParams {
   pass?: string
-  name?: string
-  relative_name?: string
   q?: string
-  epic_no?: string
-  house_no?: string
 }
 
