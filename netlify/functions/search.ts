@@ -18,6 +18,8 @@ type QueryDict = Record<string, string | undefined>
 
 const normalize = (value: string | undefined | null) => value?.trim().toLowerCase() ?? ''
 
+const tokenize = (value: string) => value.split(/\s+/).filter(Boolean)
+
 const matchesField = (recordValue: string | undefined, needle: string) => {
   if (!needle) return true
   const value = recordValue ?? ''
@@ -26,13 +28,11 @@ const matchesField = (recordValue: string | undefined, needle: string) => {
 
 const filterRecords = (records: VoterRecord[], params: QueryDict): VoterRecord[] => {
   const filters: Array<[keyof VoterRecord, string]> = [
-    ['name', normalize(params.name)],
-    ['relative_name', normalize(params.relative_name)],
     ['epic_no', normalize(params.epic_no)],
     ['house_no', normalize(params.house_no)],
   ]
 
-  const globalNeedle = normalize(params.q)
+  const globalTokens = tokenize(normalize(params.q))
 
   return records.filter((record) => {
     for (const [field, needle] of filters) {
@@ -41,10 +41,11 @@ const filterRecords = (records: VoterRecord[], params: QueryDict): VoterRecord[]
       }
     }
 
-    if (globalNeedle) {
-      const hasMatch = SEARCHABLE_COLUMNS.some((column) =>
-        matchesField(record[column], globalNeedle),
-      )
+    if (globalTokens.length > 0) {
+      const hasMatch = SEARCHABLE_COLUMNS.some((column) => {
+        const value = (record[column] ?? '').toLowerCase()
+        return globalTokens.every((token) => value.includes(token))
+      })
       if (!hasMatch) {
         return false
       }

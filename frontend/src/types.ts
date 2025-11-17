@@ -23,8 +23,6 @@ export interface SearchResponse {
 
 export interface SearchParams {
   q?: string
-  name?: string
-  relative_name?: string
   epic_no?: string
   house_no?: string
   limit?: number | null

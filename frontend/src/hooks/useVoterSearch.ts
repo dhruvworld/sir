@@ -4,8 +4,6 @@ import type { SearchParams, SearchResponse } from '../types'
 
 const defaultParams: SearchParams = {
   q: '',
-  name: '',
-  relative_name: '',
   epic_no: '',
   house_no: '',
   limit: null,

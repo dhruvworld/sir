@@ -15,8 +15,6 @@ const textFields: Array<{
   placeholder: string
 }> = [
   { name: 'q', label: 'Smart search', placeholder: 'Any keyword, EPIC, relation, etc.' },
-  { name: 'name', label: 'Voter name', placeholder: 'Full or partial name' },
-  { name: 'relative_name', label: 'Relative name', placeholder: 'Parent / spouse name' },
   { name: 'epic_no', label: 'EPIC number', placeholder: 'e.g., GJX1234567' },
   { name: 'house_no', label: 'House number', placeholder: 'e.g., 45/A' },
 ]
