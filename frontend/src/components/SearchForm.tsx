@@ -14,7 +14,11 @@ const textFields: Array<{
   label: string
   placeholder: string
 }> = [
-  { name: 'q', label: 'Smart search', placeholder: 'Any keyword, EPIC, relation, etc.' },
+  {
+    name: 'q',
+    label: 'Smart search',
+    placeholder: 'Name, relative name, house no, EPIC no…',
+  },
 ]
 
 export const SearchForm = ({
