@@ -20,6 +20,12 @@ const normalize = (value: string | undefined | null) => value?.trim().toLowerCas
 
 const tokenize = (value: string) => value.split(/\s+/).filter(Boolean)
 
+const matchesAllTokens = (recordValue: string | undefined, tokens: string[]) => {
+  if (tokens.length === 0) return true
+  const value = (recordValue ?? '').toLowerCase()
+  return tokens.every((token) => value.includes(token))
+}
+
 const matchesField = (recordValue: string | undefined, needle: string) => {
   if (!needle) return true
   const value = recordValue ?? ''
@@ -32,9 +38,19 @@ const filterRecords = (records: VoterRecord[], params: QueryDict): VoterRecord[]
     ['house_no', normalize(params.house_no)],
   ]
 
+  const nameTokens = tokenize(normalize(params.name))
+  const relativeTokens = tokenize(normalize(params.relative_name))
   const globalTokens = tokenize(normalize(params.q))
 
   return records.filter((record) => {
+    if (!matchesAllTokens(record.name, nameTokens)) {
+      return false
+    }
+
+    if (!matchesAllTokens(record.relative_name, relativeTokens)) {
+      return false
+    }
+
     for (const [field, needle] of filters) {
       if (needle && !matchesField(record[field], needle)) {
         return false

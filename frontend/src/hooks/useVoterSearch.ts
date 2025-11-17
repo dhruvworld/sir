@@ -3,10 +3,11 @@ import { searchVoters, fetchMeta } from '../api'
 import type { SearchParams, SearchResponse } from '../types'
 
 const defaultParams: SearchParams = {
+  name: '',
+  relative_name: '',
   q: '',
   epic_no: '',
   house_no: '',
-  limit: null,
 }
 
 export const useVoterSearch = () => {

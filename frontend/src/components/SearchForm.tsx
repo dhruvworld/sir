@@ -15,6 +15,8 @@ const textFields: Array<{
   placeholder: string
 }> = [
   { name: 'q', label: 'Smart search', placeholder: 'Any keyword, EPIC, relation, etc.' },
+  { name: 'name', label: 'Voter name', placeholder: 'Full or partial name' },
+  { name: 'relative_name', label: 'Relative name', placeholder: 'Parent / spouse name' },
   { name: 'epic_no', label: 'EPIC number', placeholder: 'e.g., GJX1234567' },
   { name: 'house_no', label: 'House number', placeholder: 'e.g., 45/A' },
 ]
@@ -45,18 +47,6 @@ export const SearchForm = ({
             />
           </label>
         ))}
-        <label className="field">
-          <span>Limit (optional)</span>
-          <input
-            type="number"
-            min="0"
-            placeholder="Leave blank to return all"
-            value={params.limit ?? ''}
-            onChange={(e) =>
-              onChange('limit', e.target.value === '' ? null : Number(e.target.value))
-            }
-          />
-        </label>
       </div>
       <div className="form-actions">
         <button type="submit" className="primary" disabled={isLoading}>
