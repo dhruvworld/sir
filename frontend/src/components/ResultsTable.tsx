@@ -5,7 +5,16 @@ type ResultsTableProps = {
   limited?: boolean
 }
 
-const limitedHeaders = ['Serial', 'Name', 'Relative name', 'Section', 'Booth', 'Page', 'Row']
+const limitedHeaders = [
+  'Serial',
+  'Name',
+  'Relative name',
+  'Section',
+  'Booth',
+  'Page',
+  'Row',
+  'Share',
+]
 
 const fullColumnTitles: Array<{ key: keyof VoterRecord | 'relation_block'; label: string }> = [
   { key: 'serial_no', label: 'Serial' },
@@ -22,6 +31,56 @@ const fullColumnTitles: Array<{ key: keyof VoterRecord | 'relation_block'; label
   { key: 'row_no_on_page', label: 'Row' },
   { key: 'id', label: 'ID' },
 ]
+
+const buildShareText = (record: VoterRecord) => {
+  const entries: Array<[string, string | undefined]> = [
+    ['Serial', record.serial_no],
+    ['Name', record.name],
+    ['Relation', record.relation],
+    ['Relative name', record.relative_name],
+    ['House', record.house_no],
+    ['EPIC', record.epic_no],
+    ['Gender', record.gender],
+    ['Age', record.age],
+    ['Section', record.section_id],
+    ['Booth', record.booth_no],
+    ['AC', record.ac_no],
+    ['Page', record.page_no],
+    ['Row', record.row_no_on_page],
+    ['ID', record.id],
+  ]
+
+  return entries
+    .filter(([, value]) => Boolean(value && value !== '—'))
+    .map(([label, value]) => `${label}: ${value}`)
+    .join('\n')
+}
+
+const shareRecord = async (record: VoterRecord) => {
+  if (typeof window === 'undefined') return
+  const text = buildShareText(record)
+  if (!text) return
+
+  if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+    try {
+      await navigator.share({
+        title: 'SIR CHECK • Voter details',
+        text,
+      })
+      return
+    } catch {
+      // fall back to clipboard if share cancelled or unsupported
+    }
+  }
+
+  if (typeof navigator !== 'undefined' && navigator.clipboard) {
+    await navigator.clipboard.writeText(text)
+    window.alert('Details copied. Paste into SMS or WhatsApp.')
+    return
+  }
+
+  window.alert(text)
+}
 
 export const ResultsTable = ({ records, limited = false }: ResultsTableProps) => {
   if (limited) {
@@ -45,6 +104,11 @@ export const ResultsTable = ({ records, limited = false }: ResultsTableProps) =>
                 <td>{record.booth_no || '—'}</td>
                 <td>{record.page_no || '—'}</td>
                 <td>{record.row_no_on_page || '—'}</td>
+                <td>
+                  <button type="button" className="share-button" onClick={() => shareRecord(record)}>
+                    Share
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -61,6 +125,7 @@ export const ResultsTable = ({ records, limited = false }: ResultsTableProps) =>
             {fullColumnTitles.map(({ key, label }) => (
               <th key={key}>{label}</th>
             ))}
+            <th>Share</th>
           </tr>
         </thead>
         <tbody>
@@ -82,6 +147,11 @@ export const ResultsTable = ({ records, limited = false }: ResultsTableProps) =>
               <td>{record.page_no || '—'}</td>
               <td>{record.row_no_on_page || '—'}</td>
               <td>{record.id || '—'}</td>
+              <td>
+                <button type="button" className="share-button" onClick={() => shareRecord(record)}>
+                  Share
+                </button>
+              </td>
             </tr>
           ))}
         </tbody>
