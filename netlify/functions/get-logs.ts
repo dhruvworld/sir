@@ -16,6 +16,7 @@ const parseBody = (body: string | null): { pass?: string } | null => {
 }
 
 export const handler: Handler = async (event) => {
+  try {
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 204,
@@ -66,6 +67,14 @@ export const handler: Handler = async (event) => {
     statusCode: 200,
     headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
     body: JSON.stringify({ entries }),
+  }
+  } catch (error) {
+    console.error('Failed to load logs', error)
+    return {
+      statusCode: 500,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+      body: JSON.stringify({ error: 'Server error', details: (error as Error).message }),
+    }
   }
 }
 
