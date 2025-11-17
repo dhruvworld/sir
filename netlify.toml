@@ -18,6 +18,3 @@
   status = 200
   force = true
 
-[blobs]
-  directory = "netlify/blobs"
-

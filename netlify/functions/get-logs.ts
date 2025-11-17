@@ -4,8 +4,6 @@ import { getStore } from '@netlify/blobs'
 const ADMIN_PASS = '0613'
 const MAX_ENTRIES = 200
 
-const store = getStore({ name: 'search-logs' })
-
 const parseBody = (body: string | null): { pass?: string } | null => {
   if (!body) return null
   try {
@@ -44,6 +42,20 @@ export const handler: Handler = async (event) => {
       statusCode: 401,
       headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
       body: JSON.stringify({ error: 'Unauthorized' }),
+    }
+  }
+
+  let store
+  try {
+    store = getStore({ name: 'search-logs' })
+  } catch (err) {
+    return {
+      statusCode: 503,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+      body: JSON.stringify({ 
+        error: 'Blobs not configured', 
+        details: 'Please enable Netlify Blobs in your site settings: Site settings > Build & deploy > Environment > Enable Blobs'
+      }),
     }
   }
 

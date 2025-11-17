@@ -13,8 +13,6 @@ type SearchLogPayload = {
   }
 }
 
-const store = getStore({ name: 'search-logs' })
-
 const parseBody = (body: string | null): SearchLogPayload | null => {
   if (!body) return null
   try {
@@ -76,7 +74,12 @@ export const handler: Handler = async (event) => {
     results: payload.results ?? null,
   }
 
-  await store.set(entry.id, JSON.stringify(entry))
+  try {
+    const store = getStore({ name: 'search-logs' })
+    await store.set(entry.id, JSON.stringify(entry))
+  } catch (err) {
+    console.error('Failed to save log entry (Blobs not enabled)', err)
+  }
 
   return {
     statusCode: 201,
