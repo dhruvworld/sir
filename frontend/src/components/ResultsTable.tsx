@@ -5,7 +5,7 @@ type ResultsTableProps = {
   limited?: boolean
 }
 
-const limitedHeaders = ['Serial', 'Name', 'Section', 'Booth', 'Page', 'Row']
+const limitedHeaders = ['Serial', 'Name', 'Relative name', 'Section', 'Booth', 'Page', 'Row']
 
 const fullColumnTitles: Array<{ key: keyof VoterRecord | 'relation_block'; label: string }> = [
   { key: 'serial_no', label: 'Serial' },
@@ -40,6 +40,7 @@ export const ResultsTable = ({ records, limited = false }: ResultsTableProps) =>
               <tr key={record.id}>
                 <td>{record.serial_no || '—'}</td>
                 <td>{record.name || '—'}</td>
+                <td>{record.relative_name || '—'}</td>
                 <td>{record.section_id || '—'}</td>
                 <td>{record.booth_no || '—'}</td>
                 <td>{record.page_no || '—'}</td>
