@@ -27,3 +27,14 @@ export interface SearchParams {
   q?: string
 }
 
+export interface SearchLogPayload {
+  visitorId: string
+  query: string
+  passProvided: boolean
+  results: {
+    total: number
+    returned: number
+    limited: boolean
+  }
+}
+

@@ -1,4 +1,4 @@
-import type { SearchParams, SearchResponse } from './types'
+import type { SearchLogPayload, SearchParams, SearchResponse } from './types'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '')
 
@@ -35,5 +35,17 @@ export const fetchMeta = async (): Promise<{ total_records: number }> => {
     throw new Error('Unable to fetch dataset metadata.')
   }
   return response.json()
+}
+
+export const logSearchEvent = async (payload: SearchLogPayload): Promise<void> => {
+  try {
+    await fetch(buildEndpoint('/log-search'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+  } catch (error) {
+    console.warn('Unable to log search event', error)
+  }
 }
 

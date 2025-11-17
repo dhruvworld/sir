@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { searchVoters, fetchMeta } from '../api'
+import { searchVoters, fetchMeta, logSearchEvent } from '../api'
 import type { SearchParams, SearchResponse } from '../types'
 
 const defaultParams: SearchParams = {
@@ -7,7 +7,26 @@ const defaultParams: SearchParams = {
   q: '',
 }
 
+const VISITOR_ID_KEY = 'sircheck-visitor-id'
+
+const generateVisitorId = () => {
+  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+    return crypto.randomUUID()
+  }
+  return `${Date.now()}-${Math.random().toString(36).slice(2)}`
+}
+
+const getVisitorId = () => {
+  if (typeof window === 'undefined') return 'anonymous'
+  const stored = window.localStorage.getItem(VISITOR_ID_KEY)
+  if (stored) return stored
+  const newId = generateVisitorId()
+  window.localStorage.setItem(VISITOR_ID_KEY, newId)
+  return newId
+}
+
 export const useVoterSearch = () => {
+  const [visitorId] = useState<string>(() => getVisitorId())
   const [params, setParams] = useState<SearchParams>({ ...defaultParams })
   const [meta, setMeta] = useState<{ total_records: number } | null>(null)
   const [data, setData] = useState<SearchResponse | null>(null)
@@ -29,6 +48,16 @@ export const useVoterSearch = () => {
       try {
         const response = await searchVoters(nextParams)
         setData(response)
+        logSearchEvent({
+          visitorId,
+          query: nextParams.q?.trim() ?? '',
+          passProvided: Boolean(nextParams.pass?.trim()),
+          results: {
+            total: response.total,
+            returned: response.returned,
+            limited: response.limited,
+          },
+        }).catch(() => undefined)
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Unknown error'
         setError(message)
@@ -37,7 +66,7 @@ export const useVoterSearch = () => {
         setIsLoading(false)
       }
     },
-    [params],
+    [params, visitorId],
   )
 
   const updateParams = useCallback((partial: Partial<SearchParams>) => {
