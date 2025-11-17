@@ -2,9 +2,12 @@ import type { VoterRecord } from '../types'
 
 type ResultsTableProps = {
   records: VoterRecord[]
+  limited?: boolean
 }
 
-const columnTitles: Array<{ key: keyof VoterRecord | 'relation_block'; label: string }> = [
+const limitedHeaders = ['Serial', 'Name', 'Section', 'Booth', 'Page', 'Row']
+
+const fullColumnTitles: Array<{ key: keyof VoterRecord | 'relation_block'; label: string }> = [
   { key: 'serial_no', label: 'Serial' },
   { key: 'name', label: 'Name' },
   { key: 'relation_block', label: 'Relation' },
@@ -20,13 +23,41 @@ const columnTitles: Array<{ key: keyof VoterRecord | 'relation_block'; label: st
   { key: 'id', label: 'ID' },
 ]
 
-export const ResultsTable = ({ records }: ResultsTableProps) => {
+export const ResultsTable = ({ records, limited = false }: ResultsTableProps) => {
+  if (limited) {
+    return (
+      <div className="results-wrapper">
+        <table className="results-table">
+          <thead>
+            <tr>
+              {limitedHeaders.map((label) => (
+                <th key={label}>{label}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {records.map((record) => (
+              <tr key={record.id}>
+                <td>{record.serial_no || '—'}</td>
+                <td>{record.name || '—'}</td>
+                <td>{record.section_id || '—'}</td>
+                <td>{record.booth_no || '—'}</td>
+                <td>{record.page_no || '—'}</td>
+                <td>{record.row_no_on_page || '—'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )
+  }
+
   return (
     <div className="results-wrapper">
       <table className="results-table">
         <thead>
           <tr>
-            {columnTitles.map(({ key, label }) => (
+            {fullColumnTitles.map(({ key, label }) => (
               <th key={key}>{label}</th>
             ))}
           </tr>

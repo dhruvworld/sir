@@ -89,13 +89,31 @@ export const handler: Handler = async (event) => {
   const filtered = filterRecords(voters, params)
 
   const passValue = params.pass?.trim() ?? ''
-  const allowedPasses = new Set(['ds', 'DS', 'Ds'])
-  const hasFullAccess = allowedPasses.has(passValue)
+  const hasFullAccess = passValue.toLowerCase() == 'ds'
 
   const limitParam = params.limit?.trim()
   const limit = limitParam ? Number(limitParam) : undefined
   const results =
     limit && limit > 0 ? filtered.slice(0, limit) : filtered.slice(0, filtered.length)
+
+  const sanitizedResults = hasFullAccess
+    ? results
+    : results.map((record) => ({
+        id: record.id,
+        section_id: record.section_id,
+        booth_no: record.booth_no,
+        page_no: record.page_no,
+        row_no_on_page: record.row_no_on_page,
+        serial_no: record.serial_no,
+        name: record.name,
+        relation: '',
+        relative_name: '',
+        house_no: '',
+        epic_no: '',
+        gender: '',
+        age: '',
+        ac_no: '',
+      }))
 
   return {
     statusCode: 200,
@@ -106,7 +124,7 @@ export const handler: Handler = async (event) => {
     body: JSON.stringify({
       total: filtered.length,
       returned: results.length,
-      results,
+      results: sanitizedResults,
       limited: !hasFullAccess,
     }),
   }

@@ -53,7 +53,7 @@ export const SearchForm = ({
         <input
           type="password"
           value={params.pass ?? ''}
-          placeholder="Enter DS to unlock full data"
+          placeholder="Add pass to show full details"
           onChange={(e) => onChange('pass', e.target.value)}
         />
       </label>

@@ -8,6 +8,7 @@ function App() {
   const { params, data, summary, meta, isLoading, error, runSearch, updateParams, reset } =
     useVoterSearch()
   const hasResults = !!data && data.results.length > 0
+  const limitedView = !!data?.limited
 
   return (
     <div className="page">
@@ -37,6 +38,12 @@ function App() {
         returned={summary?.returned}
       />
 
+      {limitedView && (
+        <div className="banner warning">
+          Showing limited details. Add the pass to view full voter information.
+        </div>
+      )}
+
       {error && <div className="banner error">{error}</div>}
       {isLoading && <div className="banner info">Searching records…</div>}
 
@@ -47,7 +54,7 @@ function App() {
         </div>
       )}
 
-      {hasResults && <ResultsTable records={data!.results} />}
+      {hasResults && <ResultsTable records={data!.results} limited={limitedView} />}
     </div>
   )
 }
