@@ -17,13 +17,8 @@ const textFields: Array<{
   { name: 'q', label: 'Smart search', placeholder: 'Any keyword, EPIC, relation, etc.' },
   { name: 'name', label: 'Voter name', placeholder: 'Full or partial name' },
   { name: 'relative_name', label: 'Relative name', placeholder: 'Parent / spouse name' },
-  { name: 'relation', label: 'Relation type', placeholder: 'Father / Husband / Other' },
   { name: 'epic_no', label: 'EPIC number', placeholder: 'e.g., GJX1234567' },
   { name: 'house_no', label: 'House number', placeholder: 'e.g., 45/A' },
-  { name: 'serial_no', label: 'Serial number', placeholder: 'e.g., 102' },
-  { name: 'section_id', label: 'Section ID', placeholder: 'e.g., 1144' },
-  { name: 'booth_no', label: 'Booth', placeholder: 'e.g., 79/184' },
-  { name: 'ac_no', label: 'AC number', placeholder: 'e.g., 79' },
 ]
 
 export const SearchForm = ({

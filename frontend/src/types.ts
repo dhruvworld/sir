@@ -25,13 +25,8 @@ export interface SearchParams {
   q?: string
   name?: string
   relative_name?: string
-  relation?: string
   epic_no?: string
   house_no?: string
-  serial_no?: string
-  section_id?: string
-  booth_no?: string
-  ac_no?: string
   limit?: number | null
 }
 

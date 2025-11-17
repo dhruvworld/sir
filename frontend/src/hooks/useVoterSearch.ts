@@ -6,13 +6,8 @@ const defaultParams: SearchParams = {
   q: '',
   name: '',
   relative_name: '',
-  relation: '',
   epic_no: '',
   house_no: '',
-  serial_no: '',
-  section_id: '',
-  booth_no: '',
-  ac_no: '',
   limit: null,
 }
 

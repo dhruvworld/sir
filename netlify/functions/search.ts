@@ -28,13 +28,8 @@ const filterRecords = (records: VoterRecord[], params: QueryDict): VoterRecord[]
   const filters: Array<[keyof VoterRecord, string]> = [
     ['name', normalize(params.name)],
     ['relative_name', normalize(params.relative_name)],
-    ['relation', normalize(params.relation)],
     ['epic_no', normalize(params.epic_no)],
     ['house_no', normalize(params.house_no)],
-    ['serial_no', normalize(params.serial_no)],
-    ['section_id', normalize(params.section_id)],
-    ['booth_no', normalize(params.booth_no)],
-    ['ac_no', normalize(params.ac_no)],
   ]
 
   const globalNeedle = normalize(params.q)
