@@ -16,9 +16,7 @@ function App() {
           <p className="eyebrow">Kalol • Gandhinagar District • 2002 rolls</p>
           <h1>Find voters instantly</h1>
           <p className="lede">
-            Search by voter name, relative name, EPIC number or house number. Smart search
-            supports Gujarati and English keywords, even when entered out of order.
-          </p>
+            Search by voter name, relative name, EPIC number or house number. 
         </div>
       </header>
 

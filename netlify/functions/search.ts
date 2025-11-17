@@ -88,6 +88,10 @@ export const handler: Handler = async (event) => {
   const params = event.queryStringParameters ?? {}
   const filtered = filterRecords(voters, params)
 
+  const passValue = params.pass?.trim() ?? ''
+  const allowedPasses = new Set(['ds', 'DS', 'Ds'])
+  const hasFullAccess = allowedPasses.has(passValue)
+
   const limitParam = params.limit?.trim()
   const limit = limitParam ? Number(limitParam) : undefined
   const results =
@@ -103,6 +107,7 @@ export const handler: Handler = async (event) => {
       total: filtered.length,
       returned: results.length,
       results,
+      limited: !hasFullAccess,
     }),
   }
 }

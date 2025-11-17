@@ -19,9 +19,11 @@ export interface SearchResponse {
   total: number
   returned: number
   results: VoterRecord[]
+  limited: boolean
 }
 
 export interface SearchParams {
+  pass?: string
   name?: string
   relative_name?: string
   q?: string

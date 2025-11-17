@@ -48,6 +48,15 @@ export const SearchForm = ({
           </label>
         ))}
       </div>
+      <label className="field pass-field">
+        <span>Access pass</span>
+        <input
+          type="password"
+          value={params.pass ?? ''}
+          placeholder="Enter DS to unlock full data"
+          onChange={(e) => onChange('pass', e.target.value)}
+        />
+      </label>
       <div className="form-actions">
         <button type="submit" className="primary" disabled={isLoading}>
           {isLoading ? 'Searching…' : 'Search'}
