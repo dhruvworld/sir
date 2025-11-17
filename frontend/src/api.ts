@@ -1,4 +1,4 @@
-import type { SearchLogPayload, SearchParams, SearchResponse } from './types'
+import type { SearchLogEntry, SearchLogPayload, SearchParams, SearchResponse } from './types'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '')
 
@@ -47,5 +47,24 @@ export const logSearchEvent = async (payload: SearchLogPayload): Promise<void> =
   } catch (error) {
     console.warn('Unable to log search event', error)
   }
+}
+
+export const fetchSearchLogs = async (password: string): Promise<SearchLogEntry[]> => {
+  const response = await fetch(buildEndpoint('/get-logs'), {
+    headers: {
+      'x-admin-pass': password,
+    },
+  })
+
+  if (response.status === 401) {
+    throw new Error('Incorrect password')
+  }
+
+  if (!response.ok) {
+    throw new Error('Unable to load logs')
+  }
+
+  const data = await response.json()
+  return data.entries ?? []
 }
 

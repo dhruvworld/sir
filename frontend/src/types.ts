@@ -38,3 +38,21 @@ export interface SearchLogPayload {
   }
 }
 
+export interface SearchLogEntry {
+  id: string
+  timestamp: string
+  ip?: string
+  country?: string | null
+  region?: string | null
+  city?: string | null
+  visitorId?: string | null
+  query: string
+  passProvided: boolean
+  userAgent?: string
+  results?: {
+    total?: number
+    returned?: number
+    limited?: boolean
+  } | null
+}
+

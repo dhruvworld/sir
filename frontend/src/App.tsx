@@ -1,10 +1,27 @@
+import { useEffect, useState } from 'react'
 import './App.css'
-import { SearchForm } from './components/SearchForm'
+import { LogsView } from './components/LogsView'
 import { ResultsTable } from './components/ResultsTable'
+import { SearchForm } from './components/SearchForm'
 import { SummaryBar } from './components/SummaryBar'
 import { useVoterSearch } from './hooks/useVoterSearch'
 
 function App() {
+  const [isLogsRoute, setIsLogsRoute] = useState<boolean>(() =>
+    typeof window !== 'undefined' ? window.location.pathname.startsWith('/logs') : false,
+  )
+
+  useEffect(() => {
+    const handle = () => {
+      setIsLogsRoute(window.location.pathname.startsWith('/logs'))
+    }
+    handle()
+  }, [])
+
+  if (isLogsRoute) {
+    return <LogsView />
+  }
+
   const { params, data, summary, meta, isLoading, error, runSearch, updateParams, reset } =
     useVoterSearch()
   const hasResults = !!data && data.results.length > 0

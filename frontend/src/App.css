@@ -207,6 +207,94 @@ header h1 {
   color: #64748b;
 }
 
+.logs-page {
+  min-height: 100vh;
+  padding: 3rem 1rem;
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.logs-card {
+  background: white;
+  border-radius: 1rem;
+  padding: 2rem;
+  box-shadow: 0 20px 30px rgb(15 23 42 / 15%);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.logs-card form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.logs-card label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.logs-card input {
+  border: 1px solid #cbd5f5;
+  border-radius: 0.65rem;
+  padding: 0.75rem;
+}
+
+.logs-error {
+  color: #b91c1c;
+  font-weight: 600;
+}
+
+.logs-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.logs-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.logs-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  background: #0f172a;
+  color: white;
+  border-radius: 1rem;
+  padding: 1rem;
+}
+
+.logs-summary span {
+  display: block;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.7;
+}
+
+.logs-summary strong {
+  font-size: 1.6rem;
+}
+
+.logs-table th,
+.logs-table td {
+  white-space: nowrap;
+}
+
+.logs-table td:nth-child(2) {
+  min-width: 200px;
+  white-space: normal;
+}
+
 .share-button {
   border: none;
   background: #0ea5e9;
