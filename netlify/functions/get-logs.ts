@@ -59,8 +59,22 @@ export const handler: Handler = async (event) => {
     }
   }
 
-  const list = await store.list()
-  const sorted = [...list.blobs].sort((a, b) => {
+  let list
+  try {
+    list = await store.list()
+  } catch (err) {
+    console.error('Failed to list blobs', err)
+    return {
+      statusCode: 500,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+      body: JSON.stringify({ 
+        error: 'Failed to list logs',
+        details: err instanceof Error ? err.message : 'Unknown error'
+      }),
+    }
+  }
+
+  const sorted = [...(list.blobs || [])].sort((a, b) => {
     const aTime = a.uploadedAt ? new Date(a.uploadedAt).getTime() : 0
     const bTime = b.uploadedAt ? new Date(b.uploadedAt).getTime() : 0
     return bTime - aTime
@@ -70,15 +84,23 @@ export const handler: Handler = async (event) => {
 
   const entries = await Promise.all(
     limited.map(async (blob) => {
-      const entry = await store.get(blob.key, { type: 'json' })
-      return entry
+      try {
+        const entry = await store.get(blob.key, { type: 'json' })
+        return entry
+      } catch (err) {
+        console.error(`Failed to get blob ${blob.key}`, err)
+        return null
+      }
     }),
   )
+
+  // Filter out null entries
+  const validEntries = entries.filter((entry) => entry !== null)
 
   return {
     statusCode: 200,
     headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-    body: JSON.stringify({ entries }),
+    body: JSON.stringify({ entries: validEntries }),
   }
   } catch (error) {
     console.error('Failed to load logs', error)

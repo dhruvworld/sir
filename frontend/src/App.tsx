@@ -52,10 +52,19 @@ function App() {
   const hasResults = !!data && data.results.length > 0
   const limitedView = !!data?.limited
 
-  const navigateToLogs = () => {
-    window.history.pushState({}, '', '/logs')
-    window.dispatchEvent(new PopStateEvent('popstate'))
-  }
+  // Hidden access to logs: Press Ctrl+L (or Cmd+L on Mac)
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'l' && !e.shiftKey && !e.altKey) {
+        e.preventDefault()
+        window.history.pushState({}, '', '/logs')
+        window.dispatchEvent(new PopStateEvent('popstate'))
+      }
+    }
+    
+    window.addEventListener('keydown', handleKeyPress)
+    return () => window.removeEventListener('keydown', handleKeyPress)
+  }, [])
 
   return (
     <div className="page">
@@ -65,9 +74,6 @@ function App() {
           <h1>Find voters instantly (Gujarati search only)</h1>
           <p className="lede">Type Gujarati smart search keywords and optional access pass.</p>
         </div>
-        <a href="/logs" onClick={(e) => { e.preventDefault(); navigateToLogs(); }} className="header-link">
-          Logs
-        </a>
       </header>
 
       <SearchForm

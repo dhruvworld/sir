@@ -50,23 +50,42 @@ export const logSearchEvent = async (payload: SearchLogPayload): Promise<void> =
 }
 
 export const fetchSearchLogs = async (password: string): Promise<SearchLogEntry[]> => {
-  const response = await fetch(buildEndpoint('/get-logs'), {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ pass: password }),
-  })
+  try {
+    const response = await fetch(buildEndpoint('/get-logs'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ pass: password }),
+    })
 
-  if (response.status === 401) {
-    throw new Error('Incorrect password')
+    if (response.status === 401) {
+      throw new Error('Incorrect password')
+    }
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      const errorMessage = errorData.error || errorData.details || 'Unable to load logs'
+      throw new Error(errorMessage)
+    }
+
+    const data = await response.json()
+    
+    // Handle different response formats
+    if (Array.isArray(data)) {
+      return data
+    }
+    
+    if (data.entries && Array.isArray(data.entries)) {
+      return data.entries
+    }
+    
+    return []
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error
+    }
+    throw new Error('Unable to load logs. Please check if Netlify Blobs is configured.')
   }
-
-  if (!response.ok) {
-    throw new Error('Unable to load logs')
-  }
-
-  const data = await response.json()
-  return data.entries ?? []
 }
 

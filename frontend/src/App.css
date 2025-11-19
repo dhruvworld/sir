@@ -32,38 +32,11 @@ header {
   position: relative;
 }
 
-header > div {
-  flex: 1;
-}
-
-.header-link {
-  position: absolute;
-  top: 1.25rem;
-  right: 1rem;
-  color: white;
-  text-decoration: none;
-  font-weight: 600;
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  background: rgba(255, 255, 255, 0.2);
-  transition: background 0.15s ease;
-  font-size: 0.9rem;
-}
-
-.header-link:hover {
-  background: rgba(255, 255, 255, 0.3);
-}
-
 @media (min-width: 768px) {
   header {
     padding: 1.5rem;
     border-radius: 1.25rem;
     box-shadow: 0 15px 35px rgb(12 74 110 / 35%);
-  }
-
-  .header-link {
-    top: 1.5rem;
-    right: 1.5rem;
   }
 }
 

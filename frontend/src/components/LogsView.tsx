@@ -108,7 +108,16 @@ export const LogsView = () => {
               {isLoading ? 'Checking…' : 'Unlock'}
             </button>
           </form>
-          {error && <p className="logs-error">{error}</p>}
+          {error && (
+            <div className="logs-error">
+              <p style={{ margin: 0, fontWeight: 600 }}>{error}</p>
+              {error.includes('Blobs') && (
+                <p style={{ margin: '0.5rem 0 0', fontSize: '0.9rem', opacity: 0.8 }}>
+                  To enable logs, go to Netlify Dashboard → Site settings → Build & deploy → Environment → Enable Blobs
+                </p>
+              )}
+            </div>
+          )}
         </div>
       </div>
     )
