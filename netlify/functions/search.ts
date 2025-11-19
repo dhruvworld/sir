@@ -20,27 +20,46 @@ const SEARCHABLE_COLUMNS: Array<keyof VoterRecord> = [
 
 type QueryDict = Record<string, string | undefined>
 
-const normalize = (value: string | undefined | null) => value?.trim().toLowerCase() ?? ''
+const normalize = (value: string | undefined | null): string => {
+  if (!value) return ''
+  return value.trim().toLowerCase()
+}
 
-const tokenize = (value: string) => value.split(/\s+/).filter(Boolean)
+const tokenize = (value: string): string[] => {
+  if (!value) return []
+  return value.split(/\s+/).filter(Boolean)
+}
 
 type IndexedRecord = VoterRecord & { _searchText: string }
 
 let indexedCache: IndexedRecord[] | null = null
+let votersCache: VoterRecord[] | null = null
 
 const buildSearchText = (record: VoterRecord): string => {
-  return SEARCHABLE_COLUMNS.map((col) => (record[col] ?? '')).join(' ').toLowerCase()
+  let text = ''
+  for (let i = 0; i < SEARCHABLE_COLUMNS.length; i++) {
+    const val = record[SEARCHABLE_COLUMNS[i]]
+    if (val) text += val.toLowerCase() + ' '
+  }
+  return text
 }
 
 const getIndexedRecords = (records: VoterRecord[]): IndexedRecord[] => {
   if (indexedCache && indexedCache.length === records.length) {
     return indexedCache
   }
-  indexedCache = records.map((record) => ({
-    ...record,
-    _searchText: buildSearchText(record),
-  }))
+  indexedCache = new Array(records.length)
+  for (let i = 0; i < records.length; i++) {
+    indexedCache[i] = {
+      ...records[i],
+      _searchText: buildSearchText(records[i]),
+    }
+  }
   return indexedCache
+}
+
+const fastIncludes = (haystack: string, needle: string): boolean => {
+  return haystack.indexOf(needle) !== -1
 }
 
 const filterRecords = (
@@ -49,55 +68,133 @@ const filterRecords = (
   limit?: number,
 ): { results: VoterRecord[]; total: number } => {
   const indexed = getIndexedRecords(records)
-  const filters: Array<[keyof VoterRecord, string]> = [
-    ['epic_no', normalize(params.epic_no)],
-    ['house_no', normalize(params.house_no)],
-  ]
+  
+  // Normalize all params once
+  const epicNo = normalize(params.epic_no)
+  const houseNo = normalize(params.house_no)
+  const nameQuery = normalize(params.name)
+  const relativeQuery = normalize(params.relative_name)
+  const globalQuery = normalize(params.q)
 
-  const nameTokens = tokenize(normalize(params.name))
-  const relativeTokens = tokenize(normalize(params.relative_name))
-  const globalTokens = tokenize(normalize(params.q))
+  // Tokenize once
+  const nameTokens = tokenize(nameQuery)
+  const relativeTokens = tokenize(relativeQuery)
+  const globalTokens = tokenize(globalQuery)
 
   const results: VoterRecord[] = []
   const maxResults = limit && limit > 0 ? limit : Infinity
   let totalCount = 0
+  const hasLimit = maxResults !== Infinity
 
-  for (const record of indexed) {
-    if (nameTokens.length > 0) {
-      const nameLower = (record.name ?? '').toLowerCase()
-      if (!nameTokens.every((token) => nameLower.includes(token))) {
+  // Fast path: exact matches on epic_no or house_no (most selective)
+  if (epicNo || houseNo) {
+    for (let i = 0; i < indexed.length; i++) {
+      const record = indexed[i]
+      
+      // Check exact matches first (most selective)
+      if (epicNo && !fastIncludes((record.epic_no ?? '').toLowerCase(), epicNo)) {
         continue
       }
-    }
-
-    if (relativeTokens.length > 0) {
-      const relativeLower = (record.relative_name ?? '').toLowerCase()
-      if (!relativeTokens.every((token) => relativeLower.includes(token))) {
+      if (houseNo && !fastIncludes((record.house_no ?? '').toLowerCase(), houseNo)) {
         continue
       }
-    }
 
-    let fieldMatch = true
-    for (const [field, needle] of filters) {
-      if (needle) {
-        const value = (record[field] ?? '').toLowerCase()
-        if (!value.includes(needle)) {
-          fieldMatch = false
-          break
+      // Check name tokens
+      if (nameTokens.length > 0) {
+        const nameLower = (record.name ?? '').toLowerCase()
+        let nameMatch = true
+        for (let j = 0; j < nameTokens.length; j++) {
+          if (!fastIncludes(nameLower, nameTokens[j])) {
+            nameMatch = false
+            break
+          }
         }
+        if (!nameMatch) continue
+      }
+
+      // Check relative tokens
+      if (relativeTokens.length > 0) {
+        const relativeLower = (record.relative_name ?? '').toLowerCase()
+        let relativeMatch = true
+        for (let j = 0; j < relativeTokens.length; j++) {
+          if (!fastIncludes(relativeLower, relativeTokens[j])) {
+            relativeMatch = false
+            break
+          }
+        }
+        if (!relativeMatch) continue
+      }
+
+      // Check global tokens
+      if (globalTokens.length > 0) {
+        let globalMatch = true
+        for (let j = 0; j < globalTokens.length; j++) {
+          if (!fastIncludes(record._searchText, globalTokens[j])) {
+            globalMatch = false
+            break
+          }
+        }
+        if (!globalMatch) continue
+      }
+
+      totalCount++
+      if (results.length < maxResults) {
+        results.push(record)
+      } else if (hasLimit) {
+        // Early termination when we have enough results
+        break
       }
     }
-    if (!fieldMatch) continue
+  } else {
+    // No exact matches, use global search
+    for (let i = 0; i < indexed.length; i++) {
+      const record = indexed[i]
 
-    if (globalTokens.length > 0) {
-      if (!globalTokens.every((token) => record._searchText.includes(token))) {
-        continue
+      // Check name tokens first (most selective)
+      if (nameTokens.length > 0) {
+        const nameLower = (record.name ?? '').toLowerCase()
+        let nameMatch = true
+        for (let j = 0; j < nameTokens.length; j++) {
+          if (!fastIncludes(nameLower, nameTokens[j])) {
+            nameMatch = false
+            break
+          }
+        }
+        if (!nameMatch) continue
       }
-    }
 
-    totalCount++
-    if (results.length < maxResults) {
-      results.push(record)
+      // Check relative tokens
+      if (relativeTokens.length > 0) {
+        const relativeLower = (record.relative_name ?? '').toLowerCase()
+        let relativeMatch = true
+        for (let j = 0; j < relativeTokens.length; j++) {
+          if (!fastIncludes(relativeLower, relativeTokens[j])) {
+            relativeMatch = false
+            break
+          }
+        }
+        if (!relativeMatch) continue
+      }
+
+      // Check global tokens (least selective, check last)
+      if (globalTokens.length > 0) {
+        let globalMatch = true
+        for (let j = 0; j < globalTokens.length; j++) {
+          if (!fastIncludes(record._searchText, globalTokens[j])) {
+            globalMatch = false
+            break
+          }
+        }
+        if (!globalMatch) continue
+      }
+
+      totalCount++
+      if (results.length < maxResults) {
+        results.push(record)
+      } else if (hasLimit) {
+        // Early termination when we have enough results
+        break
+      }
     }
   }
 
@@ -117,7 +214,12 @@ export const handler: Handler = async (event) => {
     }
   }
 
-  const voters = loadVoters()
+  // Cache voters across invocations (Netlify Functions reuse containers)
+  if (!votersCache) {
+    votersCache = loadVoters()
+  }
+  const voters = votersCache
+
   const params = event.queryStringParameters ?? {}
   const limitParam = params.limit?.trim()
   const limit = limitParam ? Number(limitParam) : undefined
@@ -125,26 +227,58 @@ export const handler: Handler = async (event) => {
   const passValue = params.pass?.trim() ?? ''
   const hasFullAccess = passValue.toLowerCase() == 'ds'
 
+  // Fast path: if no search terms, return empty results immediately
+  const hasSearchTerms =
+    params.q?.trim() ||
+    params.name?.trim() ||
+    params.relative_name?.trim() ||
+    params.epic_no?.trim() ||
+    params.house_no?.trim()
+
+  if (!hasSearchTerms) {
+    return {
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+      body: JSON.stringify({
+        total: 0,
+        returned: 0,
+        results: [],
+        limited: !hasFullAccess,
+      }),
+    }
+  }
+
   const { results, total } = filterRecords(voters, params, limit)
 
+  // Only sanitize if needed (avoid unnecessary object creation)
   const sanitizedResults = hasFullAccess
     ? results
-    : results.map((record) => ({
-        id: record.id,
-        section_id: record.section_id,
-        booth_no: record.booth_no,
-        page_no: record.page_no,
-        row_no_on_page: record.row_no_on_page,
-        serial_no: record.serial_no,
-        name: record.name,
-        relation: record.relation,
-        relative_name: record.relative_name,
-        house_no: '',
-        epic_no: '',
-        gender: '',
-        age: '',
-        ac_no: '',
-      }))
+    : (() => {
+        const sanitized = new Array(results.length)
+        for (let i = 0; i < results.length; i++) {
+          const record = results[i]
+          sanitized[i] = {
+            id: record.id,
+            section_id: record.section_id,
+            booth_no: record.booth_no,
+            page_no: record.page_no,
+            row_no_on_page: record.row_no_on_page,
+            serial_no: record.serial_no,
+            name: record.name,
+            relation: record.relation,
+            relative_name: record.relative_name,
+            house_no: '',
+            epic_no: '',
+            gender: '',
+            age: '',
+            ac_no: '',
+          }
+        }
+        return sanitized
+      })()
 
   return {
     statusCode: 200,
