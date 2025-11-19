@@ -62,9 +62,11 @@ const filterRecords = (records: VoterRecord[], params: QueryDict): VoterRecord[]
     }
 
     if (globalTokens.length > 0) {
-      const hasMatch = SEARCHABLE_COLUMNS.some((column) => {
-        const value = (record[column] ?? '').toLowerCase()
-        return globalTokens.every((token) => value.includes(token))
+      const hasMatch = globalTokens.every((token) => {
+        return SEARCHABLE_COLUMNS.some((column) => {
+          const value = (record[column] ?? '').toLowerCase()
+          return value.includes(token)
+        })
       })
       if (!hasMatch) {
         return false
