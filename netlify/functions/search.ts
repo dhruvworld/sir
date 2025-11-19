@@ -24,19 +24,31 @@ const normalize = (value: string | undefined | null) => value?.trim().toLowerCas
 
 const tokenize = (value: string) => value.split(/\s+/).filter(Boolean)
 
-const matchesAllTokens = (recordValue: string | undefined, tokens: string[]) => {
-  if (tokens.length === 0) return true
-  const value = (recordValue ?? '').toLowerCase()
-  return tokens.every((token) => value.includes(token))
+type IndexedRecord = VoterRecord & { _searchText: string }
+
+let indexedCache: IndexedRecord[] | null = null
+
+const buildSearchText = (record: VoterRecord): string => {
+  return SEARCHABLE_COLUMNS.map((col) => (record[col] ?? '')).join(' ').toLowerCase()
 }
 
-const matchesField = (recordValue: string | undefined, needle: string) => {
-  if (!needle) return true
-  const value = recordValue ?? ''
-  return value.toLowerCase().includes(needle)
+const getIndexedRecords = (records: VoterRecord[]): IndexedRecord[] => {
+  if (indexedCache && indexedCache.length === records.length) {
+    return indexedCache
+  }
+  indexedCache = records.map((record) => ({
+    ...record,
+    _searchText: buildSearchText(record),
+  }))
+  return indexedCache
 }
 
-const filterRecords = (records: VoterRecord[], params: QueryDict): VoterRecord[] => {
+const filterRecords = (
+  records: VoterRecord[],
+  params: QueryDict,
+  limit?: number,
+): { results: VoterRecord[]; total: number } => {
+  const indexed = getIndexedRecords(records)
   const filters: Array<[keyof VoterRecord, string]> = [
     ['epic_no', normalize(params.epic_no)],
     ['house_no', normalize(params.house_no)],
@@ -46,35 +58,50 @@ const filterRecords = (records: VoterRecord[], params: QueryDict): VoterRecord[]
   const relativeTokens = tokenize(normalize(params.relative_name))
   const globalTokens = tokenize(normalize(params.q))
 
-  return records.filter((record) => {
-    if (!matchesAllTokens(record.name, nameTokens)) {
-      return false
-    }
+  const results: VoterRecord[] = []
+  const maxResults = limit && limit > 0 ? limit : Infinity
+  let totalCount = 0
 
-    if (!matchesAllTokens(record.relative_name, relativeTokens)) {
-      return false
-    }
-
-    for (const [field, needle] of filters) {
-      if (needle && !matchesField(record[field], needle)) {
-        return false
+  for (const record of indexed) {
+    if (nameTokens.length > 0) {
+      const nameLower = (record.name ?? '').toLowerCase()
+      if (!nameTokens.every((token) => nameLower.includes(token))) {
+        continue
       }
     }
+
+    if (relativeTokens.length > 0) {
+      const relativeLower = (record.relative_name ?? '').toLowerCase()
+      if (!relativeTokens.every((token) => relativeLower.includes(token))) {
+        continue
+      }
+    }
+
+    let fieldMatch = true
+    for (const [field, needle] of filters) {
+      if (needle) {
+        const value = (record[field] ?? '').toLowerCase()
+        if (!value.includes(needle)) {
+          fieldMatch = false
+          break
+        }
+      }
+    }
+    if (!fieldMatch) continue
 
     if (globalTokens.length > 0) {
-      const hasMatch = globalTokens.every((token) => {
-        return SEARCHABLE_COLUMNS.some((column) => {
-          const value = (record[column] ?? '').toLowerCase()
-          return value.includes(token)
-        })
-      })
-      if (!hasMatch) {
-        return false
+      if (!globalTokens.every((token) => record._searchText.includes(token))) {
+        continue
       }
     }
 
-    return true
-  })
+    totalCount++
+    if (results.length < maxResults) {
+      results.push(record)
+    }
+  }
+
+  return { results, total: totalCount }
 }
 
 export const handler: Handler = async (event) => {
@@ -92,15 +119,13 @@ export const handler: Handler = async (event) => {
 
   const voters = loadVoters()
   const params = event.queryStringParameters ?? {}
-  const filtered = filterRecords(voters, params)
+  const limitParam = params.limit?.trim()
+  const limit = limitParam ? Number(limitParam) : undefined
 
   const passValue = params.pass?.trim() ?? ''
   const hasFullAccess = passValue.toLowerCase() == 'ds'
 
-  const limitParam = params.limit?.trim()
-  const limit = limitParam ? Number(limitParam) : undefined
-  const results =
-    limit && limit > 0 ? filtered.slice(0, limit) : filtered.slice(0, filtered.length)
+  const { results, total } = filterRecords(voters, params, limit)
 
   const sanitizedResults = hasFullAccess
     ? results
@@ -128,7 +153,7 @@ export const handler: Handler = async (event) => {
       'Access-Control-Allow-Origin': '*',
     },
     body: JSON.stringify({
-      total: filtered.length,
+      total,
       returned: results.length,
       results: sanitizedResults,
       limited: !hasFullAccess,
@@ -137,4 +162,5 @@ export const handler: Handler = async (event) => {
 }
 
 export default handler
+
 
