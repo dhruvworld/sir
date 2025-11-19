@@ -7,19 +7,23 @@ import { SummaryBar } from './components/SummaryBar'
 import { useVoterSearch } from './hooks/useVoterSearch'
 
 function App() {
-  const [isLogsRoute, setIsLogsRoute] = useState<boolean>(() =>
-    typeof window !== 'undefined' ? window.location.pathname.startsWith('/logs') : false,
+  // Use pathname directly in state to force re-render on change
+  const [pathname, setPathname] = useState<string>(() =>
+    typeof window !== 'undefined' ? window.location.pathname : '/',
   )
 
+  const isLogsRoute = pathname.startsWith('/logs')
+
   const updateRoute = useCallback(() => {
-    setIsLogsRoute(window.location.pathname.startsWith('/logs'))
+    const newPath = window.location.pathname
+    setPathname(newPath)
   }, [])
 
   useEffect(() => {
     // Check on mount
     updateRoute()
     
-    // Listen for route changes (popstate for back/forward, pushState/replaceState for navigation)
+    // Listen for route changes
     window.addEventListener('popstate', updateRoute)
     
     // Override pushState and replaceState to detect navigation
@@ -28,13 +32,13 @@ function App() {
     
     history.pushState = function(...args) {
       originalPushState.apply(history, args)
-      // Use setTimeout to ensure state update happens after pushState
-      setTimeout(updateRoute, 0)
+      // Immediately update route
+      updateRoute()
     }
     
     history.replaceState = function(...args) {
       originalReplaceState.apply(history, args)
-      setTimeout(updateRoute, 0)
+      updateRoute()
     }
     
     return () => {
@@ -47,20 +51,29 @@ function App() {
   // Hidden access to logs: Press Ctrl+L (or Cmd+L on Mac)
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
+      // Only handle if not in an input field
+      const target = e.target as HTMLElement
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
+        return
+      }
+      
       if ((e.ctrlKey || e.metaKey) && e.key === 'l' && !e.shiftKey && !e.altKey) {
         e.preventDefault()
+        e.stopPropagation()
+        // Update state first, then pushState
+        setPathname('/logs')
         window.history.pushState({}, '', '/logs')
-        // Directly update state instead of relying on event
+        // Force update
         updateRoute()
       }
     }
     
-    window.addEventListener('keydown', handleKeyPress)
-    return () => window.removeEventListener('keydown', handleKeyPress)
+    window.addEventListener('keydown', handleKeyPress, true)
+    return () => window.removeEventListener('keydown', handleKeyPress, true)
   }, [updateRoute])
 
   if (isLogsRoute) {
-    return <LogsView />
+    return <LogsView key="logs-view" />
   }
 
   const { params, data, summary, meta, isLoading, error, runSearch, updateParams, reset } =
