@@ -54,7 +54,7 @@ export const handler: Handler = async (event) => {
       headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
       body: JSON.stringify({ 
         error: 'Blobs not configured', 
-        details: 'Please enable Netlify Blobs in your site settings: Site settings > Build & deploy > Environment > Enable Blobs'
+        details: 'Please enable Netlify Blobs and create a store named "search-logs". See ENABLE_BLOBS_GUIDE.md for detailed steps.'
       }),
     }
   }
@@ -69,21 +69,25 @@ export const handler: Handler = async (event) => {
       headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
       body: JSON.stringify({ 
         error: 'Failed to list logs',
-        details: err instanceof Error ? err.message : 'Unknown error'
+        details: err instanceof Error ? err.message : 'Unknown error. Make sure Blobs is enabled.'
       }),
     }
   }
 
-  const sorted = [...(list.blobs || [])].sort((a, b) => {
-    const aTime = a.uploadedAt ? new Date(a.uploadedAt).getTime() : 0
-    const bTime = b.uploadedAt ? new Date(b.uploadedAt).getTime() : 0
-    return bTime - aTime
-  })
-
-  const limited = sorted.slice(0, MAX_ENTRIES)
+  // Filter to only log keys and sort by timestamp (newest first)
+  const blobs = list.blobs || []
+  const logBlobs = blobs
+    .filter((blob: any) => blob.key && blob.key.startsWith('log:'))
+    .sort((a: any, b: any) => {
+      // Extract timestamp from key format: log:timestamp:id
+      const aTime = parseInt(a.key?.split(':')[1]) || (a.uploadedAt ? new Date(a.uploadedAt).getTime() : 0)
+      const bTime = parseInt(b.key?.split(':')[1]) || (b.uploadedAt ? new Date(b.uploadedAt).getTime() : 0)
+      return bTime - aTime
+    })
+    .slice(0, MAX_ENTRIES)
 
   const entries = await Promise.all(
-    limited.map(async (blob) => {
+    logBlobs.map(async (blob: any) => {
       try {
         const entry = await store.get(blob.key, { type: 'json' })
         return entry

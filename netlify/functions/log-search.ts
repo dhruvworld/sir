@@ -74,11 +74,16 @@ export const handler: Handler = async (event) => {
     results: payload.results ?? null,
   }
 
+  // Store log using Netlify Blobs
+  // Note: Blobs store "search-logs" must be created in Netlify dashboard
+  // See ENABLE_BLOBS_GUIDE.md for detailed instructions
   try {
     const store = getStore({ name: 'search-logs' })
-    await store.set(entry.id, JSON.stringify(entry))
+    const key = `log:${Date.now()}:${entry.id}`
+    await store.set(key, JSON.stringify(entry))
   } catch (err) {
-    console.error('Failed to save log entry (Blobs not enabled)', err)
+    // Silently fail if Blobs is not configured - logs just won't be saved
+    console.warn('Blobs store not configured. Enable Blobs and create "search-logs" store. See ENABLE_BLOBS_GUIDE.md')
   }
 
   return {
