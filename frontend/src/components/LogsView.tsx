@@ -57,11 +57,21 @@ export const LogsView = () => {
 
   const summary = useMemo(() => summarizeEntries(entries), [entries])
 
+  const navigateHome = () => {
+    window.history.pushState({}, '', '/')
+    window.dispatchEvent(new PopStateEvent('popstate'))
+  }
+
   if (!isAuthed) {
     return (
       <div className="logs-page">
         <div className="logs-card">
-          <h1>Logs access</h1>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <h1 style={{ margin: 0 }}>Logs access</h1>
+            <a href="/" onClick={(e) => { e.preventDefault(); navigateHome(); }} style={{ color: '#0ea5e9', textDecoration: 'none', fontWeight: 600 }}>
+              ← Back to Search
+            </a>
+          </div>
           <p>Enter the pass to review search activity.</p>
           <form
             onSubmit={(event) => {
@@ -108,7 +118,12 @@ export const LogsView = () => {
     <div className="logs-page">
       <div className="logs-header">
         <div>
-          <h1>Search activity</h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
+            <h1 style={{ margin: 0 }}>Search activity</h1>
+            <a href="/" onClick={(e) => { e.preventDefault(); navigateHome(); }} style={{ color: '#0ea5e9', textDecoration: 'none', fontWeight: 600, fontSize: '0.9rem' }}>
+              ← Back to Search
+            </a>
+          </div>
           <p>Showing the most recent {entries.length} logs.</p>
         </div>
         <div className="logs-actions">

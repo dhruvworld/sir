@@ -15,7 +15,32 @@ function App() {
     const handle = () => {
       setIsLogsRoute(window.location.pathname.startsWith('/logs'))
     }
+    
+    // Check on mount
     handle()
+    
+    // Listen for route changes (popstate for back/forward, pushState/replaceState for navigation)
+    window.addEventListener('popstate', handle)
+    
+    // Override pushState and replaceState to detect navigation
+    const originalPushState = history.pushState
+    const originalReplaceState = history.replaceState
+    
+    history.pushState = function(...args) {
+      originalPushState.apply(history, args)
+      handle()
+    }
+    
+    history.replaceState = function(...args) {
+      originalReplaceState.apply(history, args)
+      handle()
+    }
+    
+    return () => {
+      window.removeEventListener('popstate', handle)
+      history.pushState = originalPushState
+      history.replaceState = originalReplaceState
+    }
   }, [])
 
   if (isLogsRoute) {
@@ -27,6 +52,11 @@ function App() {
   const hasResults = !!data && data.results.length > 0
   const limitedView = !!data?.limited
 
+  const navigateToLogs = () => {
+    window.history.pushState({}, '', '/logs')
+    window.dispatchEvent(new PopStateEvent('popstate'))
+  }
+
   return (
     <div className="page">
       <header>
@@ -35,6 +65,9 @@ function App() {
           <h1>Find voters instantly (Gujarati search only)</h1>
           <p className="lede">Type Gujarati smart search keywords and optional access pass.</p>
         </div>
+        <a href="/logs" onClick={(e) => { e.preventDefault(); navigateToLogs(); }} className="header-link">
+          Logs
+        </a>
       </header>
 
       <SearchForm
