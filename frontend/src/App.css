@@ -367,12 +367,28 @@ header h1 {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
+  position: relative;
+}
+
+.logs-card .field-with-icon {
+  position: relative;
 }
 
 .logs-card input {
   border: 1px solid #cbd5f5;
   border-radius: 0.65rem;
   padding: 0.75rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.logs-card .field-with-icon input {
+  padding-left: 2.5rem;
+}
+
+.logs-card input:focus {
+  outline: none;
+  border-color: #0ea5e9;
+  box-shadow: 0 0 0 3px rgb(14 165 233 / 25%);
 }
 
 .logs-error {
