@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import './App.css'
 import { LogsView } from './components/LogsView'
 import { ResultsTable } from './components/ResultsTable'
@@ -11,16 +11,16 @@ function App() {
     typeof window !== 'undefined' ? window.location.pathname.startsWith('/logs') : false,
   )
 
+  const updateRoute = useCallback(() => {
+    setIsLogsRoute(window.location.pathname.startsWith('/logs'))
+  }, [])
+
   useEffect(() => {
-    const handle = () => {
-      setIsLogsRoute(window.location.pathname.startsWith('/logs'))
-    }
-    
     // Check on mount
-    handle()
+    updateRoute()
     
     // Listen for route changes (popstate for back/forward, pushState/replaceState for navigation)
-    window.addEventListener('popstate', handle)
+    window.addEventListener('popstate', updateRoute)
     
     // Override pushState and replaceState to detect navigation
     const originalPushState = history.pushState
@@ -28,20 +28,36 @@ function App() {
     
     history.pushState = function(...args) {
       originalPushState.apply(history, args)
-      handle()
+      // Use setTimeout to ensure state update happens after pushState
+      setTimeout(updateRoute, 0)
     }
     
     history.replaceState = function(...args) {
       originalReplaceState.apply(history, args)
-      handle()
+      setTimeout(updateRoute, 0)
     }
     
     return () => {
-      window.removeEventListener('popstate', handle)
+      window.removeEventListener('popstate', updateRoute)
       history.pushState = originalPushState
       history.replaceState = originalReplaceState
     }
-  }, [])
+  }, [updateRoute])
+
+  // Hidden access to logs: Press Ctrl+L (or Cmd+L on Mac)
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'l' && !e.shiftKey && !e.altKey) {
+        e.preventDefault()
+        window.history.pushState({}, '', '/logs')
+        // Directly update state instead of relying on event
+        updateRoute()
+      }
+    }
+    
+    window.addEventListener('keydown', handleKeyPress)
+    return () => window.removeEventListener('keydown', handleKeyPress)
+  }, [updateRoute])
 
   if (isLogsRoute) {
     return <LogsView />
@@ -51,20 +67,6 @@ function App() {
     useVoterSearch()
   const hasResults = !!data && data.results.length > 0
   const limitedView = !!data?.limited
-
-  // Hidden access to logs: Press Ctrl+L (or Cmd+L on Mac)
-  useEffect(() => {
-    const handleKeyPress = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'l' && !e.shiftKey && !e.altKey) {
-        e.preventDefault()
-        window.history.pushState({}, '', '/logs')
-        window.dispatchEvent(new PopStateEvent('popstate'))
-      }
-    }
-    
-    window.addEventListener('keydown', handleKeyPress)
-    return () => window.removeEventListener('keydown', handleKeyPress)
-  }, [])
 
   return (
     <div className="page">
