@@ -60,7 +60,15 @@ function App() {
       )}
 
       {error && <div className="banner error">{error}</div>}
-      {isLoading && <div className="banner info">Searching records…</div>}
+
+      {isLoading && (
+        <div className="loading-overlay">
+          <div className="loading-content">
+            <div className="loading-spinner" />
+            <p>Searching records…</p>
+          </div>
+        </div>
+      )}
 
       {!hasResults && !isLoading && !error && (
         <div className="empty-state">
@@ -69,7 +77,7 @@ function App() {
         </div>
       )}
 
-      {hasResults && <ResultsTable records={data!.results} limited={limitedView} />}
+      {hasResults && !isLoading && <ResultsTable records={data!.results} limited={limitedView} />}
     </div>
   )
 }
