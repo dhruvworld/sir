@@ -7,10 +7,10 @@
   directory = "netlify/functions"
 
 [functions.search]
-  included_files = ["data/city_route.json"]
+  included_files = ["data/mixed.json"]
 
 [functions.meta]
-  included_files = ["data/city_route.json"]
+  included_files = ["data/mixed.json"]
 
 [[redirects]]
   from = "/logs"

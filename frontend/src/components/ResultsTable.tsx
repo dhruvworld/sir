@@ -24,11 +24,16 @@ const fullColumnTitles: Array<{ key: keyof VoterRecord | 'relation_block'; label
   { key: 'epic_no', label: 'EPIC' },
   { key: 'gender', label: 'Gender' },
   { key: 'age', label: 'Age' },
-  { key: 'section_id', label: 'Section' },
+  { key: 'section_id', label: 'Section ID' },
+  { key: 'section_name', label: 'Section Name' },
   { key: 'booth_no', label: 'Booth' },
+  { key: 'polling_station_name', label: 'Polling Station' },
   { key: 'ac_no', label: 'AC' },
+  { key: 'lok_sabha_name', label: 'Lok Sabha' },
+  { key: 'main_village', label: 'Village' },
   { key: 'page_no', label: 'Page' },
   { key: 'row_no_on_page', label: 'Row' },
+  { key: 'part_no', label: 'Part' },
   { key: 'id', label: 'ID' },
 ]
 
@@ -42,11 +47,16 @@ const buildShareText = (record: VoterRecord) => {
     ['EPIC', record.epic_no],
     ['Gender', record.gender],
     ['Age', record.age],
-    ['Section', record.section_id],
+    ['Section ID', record.section_id],
+    ['Section Name', record.section_name],
     ['Booth', record.booth_no],
+    ['Polling Station', record.polling_station_name],
     ['AC', record.ac_no],
+    ['Lok Sabha', record.lok_sabha_name],
+    ['Village', record.main_village],
     ['Page', record.page_no],
     ['Row', record.row_no_on_page],
+    ['Part', record.part_no],
     ['ID', record.id],
   ]
 
@@ -142,10 +152,15 @@ export const ResultsTable = ({ records, limited = false }: ResultsTableProps) =>
               <td>{record.gender || '—'}</td>
               <td>{record.age || '—'}</td>
               <td>{record.section_id || '—'}</td>
+              <td>{record.section_name || '—'}</td>
               <td>{record.booth_no || '—'}</td>
+              <td>{record.polling_station_name || '—'}</td>
               <td>{record.ac_no || '—'}</td>
+              <td>{record.lok_sabha_name || '—'}</td>
+              <td>{record.main_village || '—'}</td>
               <td>{record.page_no || '—'}</td>
               <td>{record.row_no_on_page || '—'}</td>
+              <td>{record.part_no || '—'}</td>
               <td>{record.id || '—'}</td>
               <td>
                 <button type="button" className="share-button" onClick={() => shareRecord(record)}>

@@ -9,8 +9,12 @@ const SEARCHABLE_COLUMNS: Array<keyof VoterRecord> = [
   'house_no',
   'serial_no',
   'section_id',
+  'section_name',
   'booth_no',
   'ac_no',
+  'lok_sabha_name',
+  'polling_station_name',
+  'main_village',
   'gender',
 ]
 

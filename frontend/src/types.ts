@@ -1,7 +1,8 @@
 export interface VoterRecord {
   id: string
-  section_id: string
   serial_no: string
+  section_id: string
+  section_name: string
   house_no: string
   name: string
   relation: string
@@ -10,9 +11,13 @@ export interface VoterRecord {
   age: string
   epic_no: string
   ac_no: string
+  lok_sabha_name: string
   booth_no: string
+  polling_station_name: string
+  main_village: string
   page_no: string
   row_no_on_page: string
+  part_no: string
 }
 
 export interface SearchResponse {
