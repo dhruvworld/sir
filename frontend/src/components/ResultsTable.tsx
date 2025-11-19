@@ -29,7 +29,6 @@ const fullColumnTitles: Array<{ key: keyof VoterRecord | 'relation_block'; label
   { key: 'booth_no', label: 'Booth' },
   { key: 'polling_station_name', label: 'Polling Station' },
   { key: 'ac_no', label: 'AC' },
-  { key: 'lok_sabha_name', label: 'Lok Sabha' },
   { key: 'main_village', label: 'Village' },
   { key: 'page_no', label: 'Page' },
   { key: 'row_no_on_page', label: 'Row' },
@@ -52,7 +51,6 @@ const buildShareText = (record: VoterRecord) => {
     ['Booth', record.booth_no],
     ['Polling Station', record.polling_station_name],
     ['AC', record.ac_no],
-    ['Lok Sabha', record.lok_sabha_name],
     ['Village', record.main_village],
     ['Page', record.page_no],
     ['Row', record.row_no_on_page],
@@ -156,7 +154,6 @@ export const ResultsTable = ({ records, limited = false }: ResultsTableProps) =>
               <td>{record.booth_no || '—'}</td>
               <td>{record.polling_station_name || '—'}</td>
               <td>{record.ac_no || '—'}</td>
-              <td>{record.lok_sabha_name || '—'}</td>
               <td>{record.main_village || '—'}</td>
               <td>{record.page_no || '—'}</td>
               <td>{record.row_no_on_page || '—'}</td>
