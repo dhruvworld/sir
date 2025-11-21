@@ -44,6 +44,16 @@ const sanitize = (value: string | undefined | null) => {
   return value
 }
 
+const promptPassword = (): string | null => {
+  return window.prompt('Enter password to download/share Excel file:')
+}
+
+const verifyPassword = (password: string | null): boolean => {
+  if (!password) return false
+  const validPasswords = ['JH', 'jh', 'Jh']
+  return validPasswords.includes(password.trim())
+}
+
 const buildRecordLines = (record: VoterRecord, fields: FieldDescriptor[], index: number) => {
   const lines: string[] = []
   lines.push(`Record ${index + 1}`)
@@ -138,6 +148,13 @@ const generateExcelFile = (records: VoterRecord[], options?: ExportOptions): { w
 export const downloadResultsExcel = (records: VoterRecord[], options?: ExportOptions) => {
   if (!records.length) return
   
+  // Prompt for password
+  const password = promptPassword()
+  if (!verifyPassword(password)) {
+    window.alert('Incorrect password. Access denied.')
+    return
+  }
+  
   const { wb, filename } = generateExcelFile(records, options)
   
   // Download the file
@@ -146,6 +163,13 @@ export const downloadResultsExcel = (records: VoterRecord[], options?: ExportOpt
 
 export const shareResultsExcel = async (records: VoterRecord[], options?: ExportOptions) => {
   if (!records.length) return
+  
+  // Prompt for password
+  const password = promptPassword()
+  if (!verifyPassword(password)) {
+    window.alert('Incorrect password. Access denied.')
+    return
+  }
   
   const { wb, filename } = generateExcelFile(records, options)
   
