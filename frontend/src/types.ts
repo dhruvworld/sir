@@ -30,6 +30,15 @@ export interface SearchResponse {
 export interface SearchParams {
   pass?: string
   q?: string
+  booth_no?: string
+  polling_station_name?: string
+  page_no?: string
+}
+
+export interface FilterOptionsResponse {
+  boothNumbers: string[]
+  pollingStations: string[]
+  pageNumbers: string[]
 }
 
 export interface SearchLogPayload {

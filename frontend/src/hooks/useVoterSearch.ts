@@ -5,6 +5,20 @@ import type { SearchParams, SearchResponse } from '../types'
 const defaultParams: SearchParams = {
   pass: '',
   q: '',
+  booth_no: '',
+  polling_station_name: '',
+  page_no: '',
+}
+
+const describeQuery = (current: SearchParams) => {
+  const parts: string[] = []
+  if (current.q?.trim()) parts.push(`q=${current.q.trim()}`)
+  if (current.booth_no?.trim()) parts.push(`booth=${current.booth_no.trim()}`)
+  if (current.polling_station_name?.trim())
+    parts.push(`polling=${current.polling_station_name.trim()}`)
+  if (current.page_no?.trim()) parts.push(`page=${current.page_no.trim()}`)
+  if (parts.length === 0) return 'empty'
+  return parts.join(' | ')
 }
 
 const VISITOR_ID_KEY = 'sircheck-visitor-id'
@@ -50,7 +64,7 @@ export const useVoterSearch = () => {
         setData(response)
         logSearchEvent({
           visitorId,
-          query: nextParams.q?.trim() ?? '',
+          query: describeQuery(nextParams),
           passProvided: Boolean(nextParams.pass?.trim()),
           results: {
             total: response.total,

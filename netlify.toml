@@ -12,6 +12,9 @@
 [functions.meta]
   included_files = ["data/mixed.json"]
 
+[functions.options]
+  included_files = ["data/mixed.json"]
+
 [[redirects]]
   from = "/logs"
   to = "/index.html"

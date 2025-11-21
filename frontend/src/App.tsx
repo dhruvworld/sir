@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
 import './App.css'
 import { LogsView } from './components/LogsView'
+import { ResultsActions } from './components/ResultsActions'
 import { ResultsTable } from './components/ResultsTable'
 import { SearchForm } from './components/SearchForm'
+import { StructuredSearchCard } from './components/StructuredSearchCard'
 import { SummaryBar } from './components/SummaryBar'
+import { useFilterOptions } from './hooks/useFilterOptions'
 import { useVoterSearch } from './hooks/useVoterSearch'
 
 function App() {
@@ -78,8 +81,40 @@ function App() {
 
   const { params, data, summary, meta, isLoading, error, runSearch, updateParams, reset } =
     useVoterSearch()
+  const filterOptions = useFilterOptions()
+  const [showStructuredSearch, setShowStructuredSearch] = useState(false)
   const hasResults = !!data && data.results.length > 0
   const limitedView = !!data?.limited
+
+  useEffect(() => {
+    if (params.booth_no || params.polling_station_name || params.page_no) {
+      setShowStructuredSearch(true)
+    }
+  }, [params.booth_no, params.polling_station_name, params.page_no])
+
+  const handleStructuredChange = (
+    field: 'booth_no' | 'polling_station_name' | 'page_no',
+    value: string,
+  ) => {
+    updateParams({ [field]: value })
+  }
+
+  const handleStructuredSearch = () => {
+    runSearch({
+      q: '',
+      booth_no: params.booth_no,
+      polling_station_name: params.polling_station_name,
+      page_no: params.page_no,
+    })
+  }
+
+  const handleStructuredClear = () => {
+    updateParams({
+      booth_no: '',
+      polling_station_name: '',
+      page_no: '',
+    })
+  }
 
   return (
     <div className="page">
@@ -87,9 +122,29 @@ function App() {
         <div>
           <p className="eyebrow">Kalol • Gandhinagar District • 2002 rolls</p>
           <h1>Find voters instantly (Gujarati search only)</h1>
-          <p className="lede">Type Gujarati smart search keywords and optional access pass.</p>
+          <p className="lede">
+            Type Gujarati smart search keywords and optional access pass. Prefer dropdowns? Use the
+            detail search panel below.
+          </p>
         </div>
       </header>
+
+      <StructuredSearchCard
+        isVisible={showStructuredSearch}
+        onToggle={() => setShowStructuredSearch((prev) => !prev)}
+        options={filterOptions.options}
+        optionsLoading={filterOptions.isLoading}
+        optionsError={filterOptions.error}
+        values={{
+          booth_no: params.booth_no ?? '',
+          polling_station_name: params.polling_station_name ?? '',
+          page_no: params.page_no ?? '',
+        }}
+        isSearching={isLoading}
+        onChange={handleStructuredChange}
+        onSubmit={handleStructuredSearch}
+        onClear={handleStructuredClear}
+      />
 
       <SearchForm
         params={params}
@@ -131,7 +186,12 @@ function App() {
         </div>
       )}
 
-      {hasResults && !isLoading && <ResultsTable records={data!.results} limited={limitedView} />}
+      {hasResults && !isLoading && (
+        <>
+          <ResultsActions records={data!.results} limited={limitedView} />
+          <ResultsTable records={data!.results} limited={limitedView} />
+        </>
+      )}
     </div>
   )
 }

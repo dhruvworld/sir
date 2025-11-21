@@ -62,6 +62,11 @@ const fastIncludes = (haystack: string, needle: string): boolean => {
   return haystack.indexOf(needle) !== -1
 }
 
+const matchesExact = (value: string | undefined | null, needle: string): boolean => {
+  if (!needle) return true
+  return normalize(value) === needle
+}
+
 const filterRecords = (
   records: VoterRecord[],
   params: QueryDict,
@@ -75,6 +80,9 @@ const filterRecords = (
   const nameQuery = normalize(params.name)
   const relativeQuery = normalize(params.relative_name)
   const globalQuery = normalize(params.q)
+  const boothFilter = normalize(params.booth_no)
+  const pollingStationFilter = normalize(params.polling_station_name)
+  const pageFilter = normalize(params.page_no)
 
   // Tokenize once
   const nameTokens = tokenize(nameQuery)
@@ -98,6 +106,10 @@ const filterRecords = (
       if (houseNo && !fastIncludes((record.house_no ?? '').toLowerCase(), houseNo)) {
         continue
       }
+
+      if (!matchesExact(record.booth_no, boothFilter)) continue
+      if (!matchesExact(record.polling_station_name, pollingStationFilter)) continue
+      if (!matchesExact(record.page_no, pageFilter)) continue
 
       // Check name tokens
       if (nameTokens.length > 0) {
@@ -149,6 +161,10 @@ const filterRecords = (
     // No exact matches, use global search
     for (let i = 0; i < indexed.length; i++) {
       const record = indexed[i]
+
+      if (!matchesExact(record.booth_no, boothFilter)) continue
+      if (!matchesExact(record.polling_station_name, pollingStationFilter)) continue
+      if (!matchesExact(record.page_no, pageFilter)) continue
 
       // Check name tokens first (most selective)
       if (nameTokens.length > 0) {
@@ -233,7 +249,10 @@ export const handler: Handler = async (event) => {
     params.name?.trim() ||
     params.relative_name?.trim() ||
     params.epic_no?.trim() ||
-    params.house_no?.trim()
+    params.house_no?.trim() ||
+    params.booth_no?.trim() ||
+    params.polling_station_name?.trim() ||
+    params.page_no?.trim()
 
   if (!hasSearchTerms) {
     return {

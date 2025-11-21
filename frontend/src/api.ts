@@ -1,4 +1,10 @@
-import type { SearchLogEntry, SearchLogPayload, SearchParams, SearchResponse } from './types'
+import type {
+  FilterOptionsResponse,
+  SearchLogEntry,
+  SearchLogPayload,
+  SearchParams,
+  SearchResponse,
+} from './types'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '')
 
@@ -33,6 +39,14 @@ export const fetchMeta = async (): Promise<{ total_records: number }> => {
   const response = await fetch(buildEndpoint('/meta'))
   if (!response.ok) {
     throw new Error('Unable to fetch dataset metadata.')
+  }
+  return response.json()
+}
+
+export const fetchFilterOptions = async (): Promise<FilterOptionsResponse> => {
+  const response = await fetch(buildEndpoint('/options'))
+  if (!response.ok) {
+    throw new Error('Unable to load dropdown values.')
   }
   return response.json()
 }
