@@ -32,6 +32,7 @@ export interface SearchParams {
   q?: string
   booth_no?: string
   polling_station_name?: string
+  polling_station_booth?: string  // Combined format: "Station Name - Booth No"
   page_no?: string
 }
 
@@ -42,6 +43,8 @@ export interface FilterOptionsResponse {
   boothToStation: Record<string, string>
   stationToBooths: Record<string, string[]>
   boothToPages: Record<string, string[]>
+  pollingStationBooths: string[]  // Combined options: ["Station Name - Booth No", ...]
+  pollingStationBoothToPages: Record<string, string[]>  // Key: "Station Name - Booth No"
 }
 
 export interface SearchLogPayload {

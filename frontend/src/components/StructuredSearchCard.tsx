@@ -8,9 +8,9 @@ type StructuredSearchCardProps = {
   options: FilterOptionsResponse | null
   optionsLoading: boolean
   optionsError: string | null
-  values: Pick<SearchParams, 'booth_no' | 'polling_station_name' | 'page_no'>
+  values: Pick<SearchParams, 'polling_station_booth' | 'page_no'>
   isSearching: boolean
-  onChange: (field: keyof Pick<SearchParams, 'booth_no' | 'polling_station_name' | 'page_no'>, value: string) => void
+  onChange: (field: 'polling_station_booth' | 'page_no', value: string) => void
   onSubmit: () => void
   onClear: () => void
 }
@@ -36,8 +36,8 @@ export const StructuredSearchCard = ({
   onClear,
 }: StructuredSearchCardProps) => {
   const hasSelection = useMemo(() => {
-    return Boolean(values.booth_no || values.polling_station_name || values.page_no)
-  }, [values.booth_no, values.polling_station_name, values.page_no])
+    return Boolean(values.polling_station_booth || values.page_no)
+  }, [values.polling_station_booth, values.page_no])
 
   const disableSubmit = isSearching || !hasSelection
 
@@ -47,29 +47,25 @@ export const StructuredSearchCard = ({
     onSubmit()
   }
 
-  const boothOptions = useMemo(() => {
+  const pollingStationBoothOptions = useMemo(() => {
     if (!options) return []
-    if (values.polling_station_name) {
-      return options.stationToBooths?.[values.polling_station_name] ?? []
-    }
-    return []
-  }, [options, values.polling_station_name])
+    return options.pollingStationBooths ?? []
+  }, [options])
 
   const pageOptions = useMemo(() => {
     if (!options) return []
-    if (values.booth_no) {
-      return options.boothToPages?.[values.booth_no] ?? []
+    if (values.polling_station_booth) {
+      return options.pollingStationBoothToPages?.[values.polling_station_booth] ?? []
     }
     return []
-  }, [options, values.booth_no])
+  }, [options, values.polling_station_booth])
 
-  const boothDisabled = !values.polling_station_name
-  const pageDisabled = !values.booth_no
+  const pageDisabled = !values.polling_station_booth
 
   const renderSelect = (
     label: string,
     placeholder: string,
-    field: 'booth_no' | 'polling_station_name' | 'page_no',
+    field: 'polling_station_booth' | 'page_no',
     optionsList: string[],
     disabled: boolean,
     helper?: string,
@@ -113,20 +109,12 @@ export const StructuredSearchCard = ({
           <form className="structured-form" onSubmit={handleSubmit}>
             <div className="field-grid">
               {renderSelect(
-                'Polling station',
-                'Select station…',
-                'polling_station_name',
-                options?.pollingStations ?? [],
+                'Polling station - Booth no',
+                'Select polling station and booth…',
+                'polling_station_booth',
+                pollingStationBoothOptions,
                 false,
                 'Start here',
-              )}
-              {renderSelect(
-                'Booth number',
-                'Select booth…',
-                'booth_no',
-                boothOptions,
-                boothDisabled,
-                boothDisabled ? 'Choose a polling station first' : undefined,
               )}
               {renderSelect(
                 'Page no',
@@ -134,7 +122,7 @@ export const StructuredSearchCard = ({
                 'page_no',
                 pageOptions,
                 pageDisabled,
-                pageDisabled ? 'Pick a booth to see pages' : undefined,
+                pageDisabled ? 'Pick a polling station-booth first' : undefined,
               )}
             </div>
             <div className="form-actions">

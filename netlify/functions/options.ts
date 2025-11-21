@@ -70,6 +70,44 @@ export const handler: Handler = async () => {
     buildUniqueList(voters, 'page_no'),
   ]
 
+  // Build combined polling station - booth options
+  const pollingStationBoothSet = new Set<string>()
+  const pollingStationBoothToPages: Record<string, Set<string>> = {}
+  
+  voters.forEach((record) => {
+    const booth = record.booth_no
+    const station = record.polling_station_name
+    const page = record.page_no
+    
+    if (booth && station) {
+      const combined = `${station} - ${booth}`
+      pollingStationBoothSet.add(combined)
+      
+      if (page) {
+        if (!pollingStationBoothToPages[combined]) {
+          pollingStationBoothToPages[combined] = new Set()
+        }
+        pollingStationBoothToPages[combined].add(page)
+      }
+    }
+  })
+  
+  const pollingStationBooths = Array.from(pollingStationBoothSet).sort((a, b) => {
+    // Sort by station name first, then by booth number
+    const [stationA, boothA] = a.split(' - ')
+    const [stationB, boothB] = b.split(' - ')
+    const stationCompare = stationA.localeCompare(stationB, undefined, { numeric: true })
+    if (stationCompare !== 0) return stationCompare
+    return boothA.localeCompare(boothB, undefined, { numeric: true })
+  })
+  
+  const pollingStationBoothToPagesSorted: Record<string, string[]> = {}
+  for (const [key, set] of Object.entries(pollingStationBoothToPages)) {
+    pollingStationBoothToPagesSorted[key] = Array.from(set).sort((a, b) =>
+      a.localeCompare(b, undefined, { numeric: true })
+    )
+  }
+
   return {
     statusCode: 200,
     headers: {
@@ -83,6 +121,8 @@ export const handler: Handler = async () => {
       boothToStation,
       stationToBooths: stationToBoothsSorted,
       boothToPages: boothToPagesSorted,
+      pollingStationBooths,
+      pollingStationBoothToPages: pollingStationBoothToPagesSorted,
     }),
   }
 }

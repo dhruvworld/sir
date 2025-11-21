@@ -24,6 +24,8 @@ export type VoterRecord = {
 }
 
 let cache: VoterRecord[] | null = null
+let cacheTimestamp: number = 0
+const CACHE_TTL = 5 * 60 * 1000 // 5 minutes cache
 
 const resolveDataPath = (): string => {
   const root = process.env.LAMBDA_TASK_ROOT
@@ -33,10 +35,16 @@ const resolveDataPath = (): string => {
 }
 
 export const loadVoters = (): VoterRecord[] => {
-  if (cache) return cache
+  const now = Date.now()
+  // Use cache if it exists and is fresh
+  if (cache && (now - cacheTimestamp) < CACHE_TTL) {
+    return cache
+  }
+  
   const filePath = resolveDataPath()
   const raw = fs.readFileSync(filePath, 'utf-8')
   cache = JSON.parse(raw)
+  cacheTimestamp = now
   return cache
 }
 

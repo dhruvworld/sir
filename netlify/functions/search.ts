@@ -30,10 +30,14 @@ const tokenize = (value: string): string[] => {
   return value.split(/\s+/).filter(Boolean)
 }
 
-type IndexedRecord = VoterRecord & { _searchText: string }
+type IndexedRecord = VoterRecord & { 
+  _searchText: string
+  _pollingStationBooth: string  // Pre-computed "Station - Booth" string
+}
 
 let indexedCache: IndexedRecord[] | null = null
 let votersCache: VoterRecord[] | null = null
+let pollingStationBoothIndex: Map<string, number[]> | null = null  // Map of "Station - Booth" to array indices
 
 const buildSearchText = (record: VoterRecord): string => {
   let text = ''
@@ -49,10 +53,26 @@ const getIndexedRecords = (records: VoterRecord[]): IndexedRecord[] => {
     return indexedCache
   }
   indexedCache = new Array(records.length)
+  pollingStationBoothIndex = new Map()
+  
   for (let i = 0; i < records.length; i++) {
+    const record = records[i]
+    const station = normalize(record.polling_station_name)
+    const booth = normalize(record.booth_no)
+    const combined = booth && station ? `${station} - ${booth}` : ''
+    
     indexedCache[i] = {
-      ...records[i],
-      _searchText: buildSearchText(records[i]),
+      ...record,
+      _searchText: buildSearchText(record),
+      _pollingStationBooth: combined,
+    }
+    
+    // Build index for fast lookup
+    if (combined) {
+      if (!pollingStationBoothIndex.has(combined)) {
+        pollingStationBoothIndex.set(combined, [])
+      }
+      pollingStationBoothIndex.get(combined)!.push(i)
     }
   }
   return indexedCache
@@ -82,7 +102,24 @@ const filterRecords = (
   const globalQuery = normalize(params.q)
   const boothFilter = normalize(params.booth_no)
   const pollingStationFilter = normalize(params.polling_station_name)
+  const pollingStationBoothFilter = normalize(params.polling_station_booth)
   const pageFilter = normalize(params.page_no)
+  
+  // Parse combined polling_station_booth filter
+  let parsedStation: string | undefined
+  let parsedBooth: string | undefined
+  let pollingStationBoothIndices: number[] | undefined
+  if (pollingStationBoothFilter) {
+    const parts = pollingStationBoothFilter.split(' - ')
+    if (parts.length === 2) {
+      parsedStation = parts[0].trim()
+      parsedBooth = parts[1].trim()
+    }
+    // Use index for ultra-fast lookup (index uses normalized values)
+    if (pollingStationBoothIndex && pollingStationBoothIndex.has(pollingStationBoothFilter)) {
+      pollingStationBoothIndices = pollingStationBoothIndex.get(pollingStationBoothFilter)!
+    }
+  }
 
   // Tokenize once
   const nameTokens = tokenize(nameQuery)
@@ -94,6 +131,68 @@ const filterRecords = (
   let totalCount = 0
   const hasLimit = maxResults !== Infinity
 
+  // Ultra-fast path: if we have polling_station_booth index, use it directly
+  if (pollingStationBoothIndices && pollingStationBoothIndices.length > 0) {
+    const candidateIndices = pollingStationBoothIndices
+    for (let idx = 0; idx < candidateIndices.length; idx++) {
+      const i = candidateIndices[idx]
+      const record = indexed[i]
+      
+      // Check page filter first (most selective after polling_station_booth)
+      if (!matchesExact(record.page_no, pageFilter)) continue
+      
+      // Check exact matches
+      if (epicNo && !fastIncludes((record.epic_no ?? '').toLowerCase(), epicNo)) continue
+      if (houseNo && !fastIncludes((record.house_no ?? '').toLowerCase(), houseNo)) continue
+      
+      // Check name tokens
+      if (nameTokens.length > 0) {
+        const nameLower = (record.name ?? '').toLowerCase()
+        let nameMatch = true
+        for (let j = 0; j < nameTokens.length; j++) {
+          if (!fastIncludes(nameLower, nameTokens[j])) {
+            nameMatch = false
+            break
+          }
+        }
+        if (!nameMatch) continue
+      }
+      
+      // Check relative tokens
+      if (relativeTokens.length > 0) {
+        const relativeLower = (record.relative_name ?? '').toLowerCase()
+        let relativeMatch = true
+        for (let j = 0; j < relativeTokens.length; j++) {
+          if (!fastIncludes(relativeLower, relativeTokens[j])) {
+            relativeMatch = false
+            break
+          }
+        }
+        if (!relativeMatch) continue
+      }
+      
+      // Check global tokens
+      if (globalTokens.length > 0) {
+        let globalMatch = true
+        for (let j = 0; j < globalTokens.length; j++) {
+          if (!fastIncludes(record._searchText, globalTokens[j])) {
+            globalMatch = false
+            break
+          }
+        }
+        if (!globalMatch) continue
+      }
+      
+      totalCount++
+      if (results.length < maxResults) {
+        results.push(record)
+      } else if (hasLimit) {
+        break
+      }
+    }
+    return { results, total: totalCount }
+  }
+  
   // Fast path: exact matches on epic_no or house_no (most selective)
   if (epicNo || houseNo) {
     for (let i = 0; i < indexed.length; i++) {
@@ -107,8 +206,22 @@ const filterRecords = (
         continue
       }
 
-      if (!matchesExact(record.booth_no, boothFilter)) continue
-      if (!matchesExact(record.polling_station_name, pollingStationFilter)) continue
+      // Handle combined polling_station_booth filter
+      if (pollingStationBoothFilter) {
+        const recordStation = normalize(record.polling_station_name)
+        const recordBooth = normalize(record.booth_no)
+        if (parsedStation && parsedBooth) {
+          if (recordStation !== parsedStation || recordBooth !== parsedBooth) continue
+        } else {
+          // Fallback: check if combined string matches
+          const recordCombined = `${recordStation} - ${recordBooth}`
+          if (recordCombined !== pollingStationBoothFilter) continue
+        }
+      } else {
+        // Use individual filters if combined filter not provided
+        if (boothFilter && !matchesExact(record.booth_no, boothFilter)) continue
+        if (pollingStationFilter && !matchesExact(record.polling_station_name, pollingStationFilter)) continue
+      }
       if (!matchesExact(record.page_no, pageFilter)) continue
 
       // Check name tokens
@@ -162,8 +275,22 @@ const filterRecords = (
     for (let i = 0; i < indexed.length; i++) {
       const record = indexed[i]
 
-      if (!matchesExact(record.booth_no, boothFilter)) continue
-      if (!matchesExact(record.polling_station_name, pollingStationFilter)) continue
+      // Handle combined polling_station_booth filter
+      if (pollingStationBoothFilter) {
+        const recordStation = normalize(record.polling_station_name)
+        const recordBooth = normalize(record.booth_no)
+        if (parsedStation && parsedBooth) {
+          if (recordStation !== parsedStation || recordBooth !== parsedBooth) continue
+        } else {
+          // Fallback: check if combined string matches
+          const recordCombined = `${recordStation} - ${recordBooth}`
+          if (recordCombined !== pollingStationBoothFilter) continue
+        }
+      } else {
+        // Use individual filters if combined filter not provided
+        if (boothFilter && !matchesExact(record.booth_no, boothFilter)) continue
+        if (pollingStationFilter && !matchesExact(record.polling_station_name, pollingStationFilter)) continue
+      }
       if (!matchesExact(record.page_no, pageFilter)) continue
 
       // Check name tokens first (most selective)
@@ -252,6 +379,7 @@ export const handler: Handler = async (event) => {
     params.house_no?.trim() ||
     params.booth_no?.trim() ||
     params.polling_station_name?.trim() ||
+    params.polling_station_booth?.trim() ||
     params.page_no?.trim()
 
   if (!hasSearchTerms) {

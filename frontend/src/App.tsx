@@ -88,50 +88,27 @@ function App() {
   const limitedView = !!data?.limited
 
   useEffect(() => {
-    if (params.booth_no || params.polling_station_name || params.page_no) {
+    if (params.polling_station_booth || params.page_no) {
       setShowStructuredSearch(true)
     }
-  }, [params.booth_no, params.polling_station_name, params.page_no])
+  }, [params.polling_station_booth, params.page_no])
 
   const handleStructuredChange = (
-    field: 'booth_no' | 'polling_station_name' | 'page_no',
+    field: 'polling_station_booth' | 'page_no',
     value: string,
   ) => {
-    if (field === 'polling_station_name') {
-      const updates: Partial<SearchParams> = { polling_station_name: value }
-      const allowedBooths = value
-        ? filterOptions.options?.stationToBooths?.[value] ?? []
-        : []
-
+    if (field === 'polling_station_booth') {
+      const updates: Partial<SearchParams> = { polling_station_booth: value }
       if (!value) {
-        updates.booth_no = ''
         updates.page_no = ''
       } else {
-        if (params.booth_no && allowedBooths.length > 0 && !allowedBooths.includes(params.booth_no)) {
-          updates.booth_no = ''
-        }
-        if (params.page_no) {
-          updates.page_no = ''
-        }
-      }
-
-      updateParams(updates)
-      return
-    }
-
-    if (field === 'booth_no') {
-      const updates: Partial<SearchParams> = { booth_no: value }
-      if (value) {
-        const autoStation = filterOptions.options?.boothToStation?.[value]
-        if (autoStation) {
-          updates.polling_station_name = autoStation
-        }
-        const allowedPages = filterOptions.options?.boothToPages?.[value] ?? []
+        // Clear page_no when polling_station_booth changes
+        const allowedPages = value
+          ? filterOptions.options?.pollingStationBoothToPages?.[value] ?? []
+          : []
         if (params.page_no && allowedPages.length > 0 && !allowedPages.includes(params.page_no)) {
           updates.page_no = ''
         }
-      } else {
-        updates.page_no = ''
       }
       updateParams(updates)
       return
@@ -143,16 +120,14 @@ function App() {
   const handleStructuredSearch = () => {
     runSearch({
       q: '',
-      booth_no: params.booth_no,
-      polling_station_name: params.polling_station_name,
+      polling_station_booth: params.polling_station_booth,
       page_no: params.page_no,
     })
   }
 
   const handleStructuredClear = () => {
     updateParams({
-      booth_no: '',
-      polling_station_name: '',
+      polling_station_booth: '',
       page_no: '',
     })
   }
@@ -177,8 +152,7 @@ function App() {
         optionsLoading={filterOptions.isLoading}
         optionsError={filterOptions.error}
         values={{
-          booth_no: params.booth_no ?? '',
-          polling_station_name: params.polling_station_name ?? '',
+          polling_station_booth: params.polling_station_booth ?? '',
           page_no: params.page_no ?? '',
         }}
         isSearching={isLoading}
