@@ -95,9 +95,44 @@ export const downloadResultsExcel = (records: VoterRecord[], options?: ExportOpt
   // Add worksheet to workbook
   XLSX.utils.book_append_sheet(wb, ws, 'Voter Data')
   
-  // Generate filename with date
-  const dateStr = new Date().toISOString().split('T')[0]
-  const filename = `sircheck-voters-${dateStr}.xlsx`
+  // Generate filename with booth_no, polling_station_name, and page_no
+  const firstRecord = records[0]
+  const boothNo = firstRecord.booth_no || ''
+  const pollingStation = firstRecord.polling_station_name || ''
+  const pageNo = firstRecord.page_no || ''
+  
+  // Get unique page numbers if multiple pages exist
+  const uniquePageNos = Array.from(new Set(records.map(r => r.page_no).filter(Boolean)))
+  const pageNumbersStr = uniquePageNos.length > 0 
+    ? (uniquePageNos.length === 1 ? pageNo : uniquePageNos.sort().join('-'))
+    : ''
+  
+  // Build filename parts
+  const filenameParts: string[] = []
+  
+  if (boothNo) {
+    filenameParts.push(`booth${boothNo}`)
+  }
+  
+  if (pollingStation) {
+    // Sanitize polling station name for filename (remove special chars)
+    const sanitizedStation = pollingStation.replace(/[^a-zA-Z0-9\u0A80-\u0AFF]/g, '_').substring(0, 30)
+    if (sanitizedStation) {
+      filenameParts.push(sanitizedStation)
+    }
+  }
+  
+  if (pageNumbersStr) {
+    filenameParts.push(`page${pageNumbersStr}`)
+  }
+  
+  // If no filters, use date
+  if (filenameParts.length === 0) {
+    const dateStr = new Date().toISOString().split('T')[0]
+    filenameParts.push(dateStr)
+  }
+  
+  const filename = `sircheck-${filenameParts.join('-')}.xlsx`
   
   // Download the file
   XLSX.writeFile(wb, filename)
