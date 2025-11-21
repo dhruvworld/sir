@@ -68,9 +68,7 @@ export const buildResultsText = (records: VoterRecord[], options?: ExportOptions
   return lines.join('\n')
 }
 
-export const downloadResultsExcel = (records: VoterRecord[], options?: ExportOptions) => {
-  if (!records.length) return
-  
+const generateExcelFile = (records: VoterRecord[], options?: ExportOptions): { wb: XLSX.WorkBook; filename: string } => {
   const fields = options?.limited ? limitedFields : fullFields
   
   // Create worksheet data with headers
@@ -134,8 +132,60 @@ export const downloadResultsExcel = (records: VoterRecord[], options?: ExportOpt
   
   const filename = `sircheck-${filenameParts.join('-')}.xlsx`
   
+  return { wb, filename }
+}
+
+export const downloadResultsExcel = (records: VoterRecord[], options?: ExportOptions) => {
+  if (!records.length) return
+  
+  const { wb, filename } = generateExcelFile(records, options)
+  
   // Download the file
   XLSX.writeFile(wb, filename)
+}
+
+export const shareResultsExcel = async (records: VoterRecord[], options?: ExportOptions) => {
+  if (!records.length) return
+  
+  const { wb, filename } = generateExcelFile(records, options)
+  
+  // Convert workbook to binary string, then to Blob
+  const excelBuffer = XLSX.write(wb, { type: 'array', bookType: 'xlsx' })
+  const blob = new Blob([excelBuffer], { 
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+  })
+  const file = new File([blob], filename, { 
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+  })
+  
+  // Try Web Share API first (works on mobile and modern browsers)
+  if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+    // Check if browser supports file sharing
+    const canShareFiles = typeof navigator.canShare === 'function' 
+      ? navigator.canShare({ files: [file] })
+      : true // Some browsers support files but don't have canShare
+    
+    if (canShareFiles) {
+      try {
+        await navigator.share({
+          title: 'SIR CHECK • Voter Data',
+          text: `Voter list: ${records.length} records`,
+          files: [file],
+        })
+        return
+      } catch (error) {
+        // User cancelled or error occurred, fall back to download
+        const err = error as Error
+        if (err.name !== 'AbortError' && err.name !== 'NotAllowedError') {
+          console.error('Share failed:', error)
+        }
+        // Fall through to download
+      }
+    }
+  }
+  
+  // Fall back to download if Web Share API not available or failed
+  downloadResultsExcel(records, options)
 }
 
 export const shareResultsAsText = async (records: VoterRecord[], options?: ExportOptions) => {
