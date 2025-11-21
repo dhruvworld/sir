@@ -61,17 +61,79 @@ header h1 {
   opacity: 0.9;
 }
 
+.search-container {
+  background: white;
+  border-radius: 1rem;
+  box-shadow: 0 2px 8px rgb(15 23 42 / 8%);
+  overflow: hidden;
+}
+
+@media (min-width: 768px) {
+  .search-container {
+    box-shadow: 0 15px 25px rgb(15 23 42 / 10%);
+  }
+}
+
+.search-mode-toggle {
+  display: flex;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.search-mode-toggle button {
+  flex: 1;
+  padding: 0.875rem 1rem;
+  border: none;
+  background: transparent;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-bottom: 2px solid transparent;
+}
+
+.search-mode-toggle button:hover {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.search-mode-toggle button.active {
+  color: #0c4a6e;
+  background: white;
+  border-bottom-color: #0c4a6e;
+}
+
 .search-form {
   padding: 1rem;
-  border-radius: 1rem;
-  background: white;
-  box-shadow: 0 2px 8px rgb(15 23 42 / 8%);
 }
 
 @media (min-width: 768px) {
   .search-form {
     padding: 1.5rem;
-    box-shadow: 0 15px 25px rgb(15 23 42 / 10%);
+  }
+}
+
+.unified-form {
+  padding: 1.5rem;
+}
+
+.unified-search-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+@media (min-width: 768px) {
+  .unified-search-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+  
+  .unified-search-fields .pass-field {
+    grid-column: span 2;
   }
 }
 

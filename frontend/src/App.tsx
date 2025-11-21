@@ -85,18 +85,20 @@ function App() {
   const { params, data, summary, meta, isLoading, error, runSearch, updateParams, reset } =
     useVoterSearch()
   const filterOptions = useFilterOptions()
-  const [showStructuredSearch, setShowStructuredSearch] = useState(false)
+  const [searchMode, setSearchMode] = useState<'smart' | 'dropdown'>('smart')
   const hasResults = !!data && data.results.length > 0
   const limitedView = !!data?.limited
 
   useEffect(() => {
     if (params.polling_station_booth || params.page_no) {
-      setShowStructuredSearch(true)
+      setSearchMode('dropdown')
+    } else if (params.q) {
+      setSearchMode('smart')
     }
-  }, [params.polling_station_booth, params.page_no])
+  }, [params.polling_station_booth, params.page_no, params.q])
 
   const handleStructuredChange = (
-    field: 'polling_station_booth' | 'page_no',
+    field: 'polling_station_booth' | 'page_no' | 'pass',
     value: string,
   ) => {
     if (field === 'polling_station_booth') {
@@ -124,6 +126,7 @@ function App() {
       q: '',
       polling_station_booth: params.polling_station_booth,
       page_no: params.page_no,
+      pass: params.pass,
     })
   }
 
@@ -134,44 +137,65 @@ function App() {
     })
   }
 
+  const handleClear = () => {
+    reset()
+    setSearchMode('smart')
+  }
+
   return (
     <div className="page">
       <header>
         <div>
           <p className="eyebrow">Kalol • Gandhinagar District • 2002 rolls</p>
           <h1>Find voters instantly (Gujarati search only)</h1>
-          <p className="lede">
-            Type Gujarati smart search keywords and optional access pass. Prefer dropdowns? Use the
-            detail search panel below.
-          </p>
         </div>
       </header>
 
-      <StructuredSearchCard
-        isVisible={showStructuredSearch}
-        onToggle={() => setShowStructuredSearch((prev) => !prev)}
-        options={filterOptions.options}
-        optionsLoading={filterOptions.isLoading}
-        optionsError={filterOptions.error}
+      <div className="search-container">
+        <div className="search-mode-toggle">
+          <button
+            type="button"
+            className={searchMode === 'smart' ? 'active' : ''}
+            onClick={() => setSearchMode('smart')}
+          >
+            Smart Search
+          </button>
+          <button
+            type="button"
+            className={searchMode === 'dropdown' ? 'active' : ''}
+            onClick={() => setSearchMode('dropdown')}
+          >
+            Dropdown
+          </button>
+        </div>
+
+        {searchMode === 'smart' ? (
+          <SearchForm
+            params={params}
+            isLoading={isLoading}
+            onChange={(field, value) => updateParams({ [field]: value })}
+            onSearch={() => runSearch()}
+            onReset={handleClear}
+          />
+        ) : (
+          <StructuredSearchCard
+            isVisible={true}
+            onToggle={() => {}}
+            options={filterOptions.options}
+            optionsLoading={filterOptions.isLoading}
+            optionsError={filterOptions.error}
         values={{
           polling_station_booth: params.polling_station_booth ?? '',
           page_no: params.page_no ?? '',
+          pass: params.pass ?? '',
         }}
-        isSearching={isLoading}
-        onChange={handleStructuredChange}
-        onSubmit={handleStructuredSearch}
-        onClear={handleStructuredClear}
-      />
-
-      <SearchForm
-        params={params}
-        isLoading={isLoading}
-        onChange={(field, value) => updateParams({ [field]: value })}
-        onSearch={() => runSearch()}
-        onReset={() => {
-          reset()
-        }}
-      />
+            isSearching={isLoading}
+            onChange={handleStructuredChange}
+            onSubmit={handleStructuredSearch}
+            onClear={handleStructuredClear}
+          />
+        )}
+      </div>
 
       <SummaryBar
         datasetSize={meta?.total_records}
