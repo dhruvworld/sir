@@ -1,4 +1,4 @@
-import { jsPDF } from 'jspdf'
+import * as XLSX from 'xlsx'
 import type { VoterRecord } from '../types'
 
 type ExportOptions = {
@@ -68,27 +68,39 @@ export const buildResultsText = (records: VoterRecord[], options?: ExportOptions
   return lines.join('\n')
 }
 
-export const downloadResultsPdf = (records: VoterRecord[], options?: ExportOptions) => {
+export const downloadResultsExcel = (records: VoterRecord[], options?: ExportOptions) => {
   if (!records.length) return
-  const doc = new jsPDF({ unit: 'pt', format: 'a4' })
-  const pageHeight = doc.internal.pageSize.getHeight()
-  const margin = 40
-  const lineHeight = 16
-  let cursorY = margin
-
-  const lines = gatherLines(records, options)
-
-  lines.forEach((line) => {
-    if (cursorY > pageHeight - margin) {
-      doc.addPage()
-      cursorY = margin
-    }
-    doc.text(line, margin, cursorY)
-    cursorY += lineHeight
-  })
-
-  const filename = `sircheck-voters-${new Date().toISOString().split('T')[0]}.pdf`
-  doc.save(filename)
+  
+  const fields = options?.limited ? limitedFields : fullFields
+  
+  // Create worksheet data with headers
+  const headers = fields.map(f => f.label)
+  const rows = records.map(record => 
+    fields.map(field => {
+      const value = record[field.key]
+      return value || ''
+    })
+  )
+  
+  const wsData = [headers, ...rows]
+  
+  // Create workbook and worksheet
+  const wb = XLSX.utils.book_new()
+  const ws = XLSX.utils.aoa_to_sheet(wsData)
+  
+  // Set column widths for better readability
+  const colWidths = fields.map(() => ({ wch: 20 }))
+  ws['!cols'] = colWidths
+  
+  // Add worksheet to workbook
+  XLSX.utils.book_append_sheet(wb, ws, 'Voter Data')
+  
+  // Generate filename with date
+  const dateStr = new Date().toISOString().split('T')[0]
+  const filename = `sircheck-voters-${dateStr}.xlsx`
+  
+  // Download the file
+  XLSX.writeFile(wb, filename)
 }
 
 export const shareResultsAsText = async (records: VoterRecord[], options?: ExportOptions) => {

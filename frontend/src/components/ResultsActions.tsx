@@ -1,5 +1,5 @@
 import type { VoterRecord } from '../types'
-import { downloadResultsPdf, shareResultsAsText } from '../utils/exportResults'
+import { downloadResultsExcel, shareResultsAsText } from '../utils/exportResults'
 
 type ResultsActionsProps = {
   records: VoterRecord[]
@@ -9,8 +9,8 @@ type ResultsActionsProps = {
 export const ResultsActions = ({ records, limited = false }: ResultsActionsProps) => {
   if (!records.length) return null
 
-  const handlePdf = () => {
-    downloadResultsPdf(records, { limited })
+  const handleExcel = () => {
+    downloadResultsExcel(records, { limited })
   }
 
   const handleShareText = () => {
@@ -19,8 +19,8 @@ export const ResultsActions = ({ records, limited = false }: ResultsActionsProps
 
   return (
     <div className="results-actions">
-      <button type="button" className="button-pill primary ghost" onClick={handlePdf}>
-        Download organized PDF
+      <button type="button" className="button-pill primary ghost" onClick={handleExcel}>
+        Download Excel file
       </button>
       <button type="button" className="button-pill secondary ghost" onClick={handleShareText}>
         Copy clean text
