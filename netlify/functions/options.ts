@@ -18,6 +18,18 @@ const buildUniqueList = (records: VoterRecord[], field: FilterField) => {
 
 export const handler: Handler = async () => {
   const voters = loadVoters()
+  const boothToStation: Record<string, string> = {}
+
+  voters.forEach((record) => {
+    if (
+      record.booth_no &&
+      record.polling_station_name &&
+      !boothToStation[record.booth_no]
+    ) {
+      boothToStation[record.booth_no] = record.polling_station_name
+    }
+  })
+
   const [boothNumbers, pollingStations, pageNumbers] = [
     buildUniqueList(voters, 'booth_no'),
     buildUniqueList(voters, 'polling_station_name'),
@@ -34,6 +46,7 @@ export const handler: Handler = async () => {
       boothNumbers,
       pollingStations,
       pageNumbers,
+      boothToStation,
     }),
   }
 }

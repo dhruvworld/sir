@@ -8,6 +8,7 @@ import { StructuredSearchCard } from './components/StructuredSearchCard'
 import { SummaryBar } from './components/SummaryBar'
 import { useFilterOptions } from './hooks/useFilterOptions'
 import { useVoterSearch } from './hooks/useVoterSearch'
+import type { SearchParams } from './types'
 
 function App() {
   // Use pathname directly in state to force re-render on change
@@ -96,6 +97,19 @@ function App() {
     field: 'booth_no' | 'polling_station_name' | 'page_no',
     value: string,
   ) => {
+    if (field === 'booth_no') {
+      const updates: Partial<SearchParams> = { booth_no: value }
+      if (value) {
+        const autoStation = filterOptions.options?.boothToStation?.[value]
+        if (autoStation) {
+          updates.polling_station_name = autoStation
+        }
+      } else {
+        updates.polling_station_name = ''
+      }
+      updateParams(updates)
+      return
+    }
     updateParams({ [field]: value })
   }
 
