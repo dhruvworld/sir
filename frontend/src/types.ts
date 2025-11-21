@@ -40,6 +40,8 @@ export interface FilterOptionsResponse {
   pollingStations: string[]
   pageNumbers: string[]
   boothToStation: Record<string, string>
+  stationToBooths: Record<string, string[]>
+  boothToPages: Record<string, string[]>
 }
 
 export interface SearchLogPayload {

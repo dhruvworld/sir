@@ -47,19 +47,45 @@ export const StructuredSearchCard = ({
     onSubmit()
   }
 
+  const boothOptions = useMemo(() => {
+    if (!options) return []
+    if (values.polling_station_name) {
+      return options.stationToBooths?.[values.polling_station_name] ?? []
+    }
+    return []
+  }, [options, values.polling_station_name])
+
+  const pageOptions = useMemo(() => {
+    if (!options) return []
+    if (values.booth_no) {
+      return options.boothToPages?.[values.booth_no] ?? []
+    }
+    return []
+  }, [options, values.booth_no])
+
+  const boothDisabled = !values.polling_station_name
+  const pageDisabled = !values.booth_no
+
   const renderSelect = (
     label: string,
     placeholder: string,
     field: 'booth_no' | 'polling_station_name' | 'page_no',
-    items: string[] | undefined,
+    optionsList: string[],
+    disabled: boolean,
+    helper?: string,
   ) => {
     return (
-      <label className="field" key={field}>
+      <label className={`field ${disabled ? 'field-disabled' : ''}`} key={field}>
         <span>{label}</span>
-        <select value={values[field] ?? ''} onChange={(e) => onChange(field, e.target.value)}>
+        <select
+          value={values[field] ?? ''}
+          onChange={(e) => onChange(field, e.target.value)}
+          disabled={disabled}
+        >
           <option value="">{placeholder}</option>
-          {items?.length ? buildOptions(items) : null}
+          {optionsList.length ? buildOptions(optionsList) : null}
         </select>
+        {helper && <small className="field-hint">{helper}</small>}
       </label>
     )
   }
@@ -87,18 +113,29 @@ export const StructuredSearchCard = ({
           <form className="structured-form" onSubmit={handleSubmit}>
             <div className="field-grid">
               {renderSelect(
-                'Booth number',
-                'Select booth…',
-                'booth_no',
-                options?.boothNumbers ?? [],
-              )}
-              {renderSelect(
                 'Polling station',
                 'Select station…',
                 'polling_station_name',
                 options?.pollingStations ?? [],
+                false,
+                'Start here',
               )}
-              {renderSelect('Page no', 'Select page…', 'page_no', options?.pageNumbers ?? [])}
+              {renderSelect(
+                'Booth number',
+                'Select booth…',
+                'booth_no',
+                boothOptions,
+                boothDisabled,
+                boothDisabled ? 'Choose a polling station first' : undefined,
+              )}
+              {renderSelect(
+                'Page no',
+                'Select page…',
+                'page_no',
+                pageOptions,
+                pageDisabled,
+                pageDisabled ? 'Pick a booth to see pages' : undefined,
+              )}
             </div>
             <div className="form-actions">
               <button type="submit" className="button-pill primary" disabled={disableSubmit}>

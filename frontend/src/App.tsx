@@ -97,6 +97,28 @@ function App() {
     field: 'booth_no' | 'polling_station_name' | 'page_no',
     value: string,
   ) => {
+    if (field === 'polling_station_name') {
+      const updates: Partial<SearchParams> = { polling_station_name: value }
+      const allowedBooths = value
+        ? filterOptions.options?.stationToBooths?.[value] ?? []
+        : []
+
+      if (!value) {
+        updates.booth_no = ''
+        updates.page_no = ''
+      } else {
+        if (params.booth_no && allowedBooths.length > 0 && !allowedBooths.includes(params.booth_no)) {
+          updates.booth_no = ''
+        }
+        if (params.page_no) {
+          updates.page_no = ''
+        }
+      }
+
+      updateParams(updates)
+      return
+    }
+
     if (field === 'booth_no') {
       const updates: Partial<SearchParams> = { booth_no: value }
       if (value) {
@@ -104,12 +126,17 @@ function App() {
         if (autoStation) {
           updates.polling_station_name = autoStation
         }
+        const allowedPages = filterOptions.options?.boothToPages?.[value] ?? []
+        if (params.page_no && allowedPages.length > 0 && !allowedPages.includes(params.page_no)) {
+          updates.page_no = ''
+        }
       } else {
-        updates.polling_station_name = ''
+        updates.page_no = ''
       }
       updateParams(updates)
       return
     }
+
     updateParams({ [field]: value })
   }
 
