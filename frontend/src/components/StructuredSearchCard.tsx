@@ -3,8 +3,6 @@ import { useMemo } from 'react'
 import type { FilterOptionsResponse, SearchParams } from '../types'
 
 type StructuredSearchCardProps = {
-  isVisible: boolean
-  onToggle: () => void
   options: FilterOptionsResponse | null
   optionsLoading: boolean
   optionsError: string | null
@@ -24,8 +22,6 @@ const buildOptions = (items: string[]) => {
 }
 
 export const StructuredSearchCard = ({
-  isVisible,
-  onToggle,
   options,
   optionsLoading,
   optionsError,

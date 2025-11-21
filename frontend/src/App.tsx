@@ -152,49 +152,136 @@ function App() {
       </header>
 
       <div className="search-container">
-        <div className="search-mode-toggle">
-          <button
-            type="button"
-            className={searchMode === 'smart' ? 'active' : ''}
-            onClick={() => setSearchMode('smart')}
-          >
-            Smart Search
-          </button>
-          <button
-            type="button"
-            className={searchMode === 'dropdown' ? 'active' : ''}
-            onClick={() => setSearchMode('dropdown')}
-          >
-            Dropdown
-          </button>
-        </div>
+        <form className="search-form unified-form" onSubmit={(e) => { e.preventDefault(); runSearch(); }}>
+          {filterOptions.optionsLoading && <div className="banner info">Loading dropdown values…</div>}
+          {filterOptions.optionsError && <div className="banner error">{filterOptions.optionsError}</div>}
+          
+          <div className="unified-search-fields">
+            {/* Smart Search Field */}
+            <label className="field field-with-icon">
+              <span>Smart search</span>
+              <div className="input-wrapper">
+                <input
+                  type="text"
+                  value={params.q ?? ''}
+                  placeholder="Name, relative name, house no, EPIC no…"
+                  onChange={(e) => updateParams({ q: e.target.value })}
+                />
+                <svg
+                  className="field-icon"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
+              </div>
+            </label>
 
-        {searchMode === 'smart' ? (
-          <SearchForm
-            params={params}
-            isLoading={isLoading}
-            onChange={(field, value) => updateParams({ [field]: value })}
-            onSearch={() => runSearch()}
-            onReset={handleClear}
-          />
-        ) : (
-          <StructuredSearchCard
-            isVisible={true}
-            onToggle={() => {}}
-            options={filterOptions.options}
-            optionsLoading={filterOptions.isLoading}
-            optionsError={filterOptions.error}
-        values={{
-          polling_station_booth: params.polling_station_booth ?? '',
-          page_no: params.page_no ?? '',
-          pass: params.pass ?? '',
-        }}
-            isSearching={isLoading}
-            onChange={handleStructuredChange}
-            onSubmit={handleStructuredSearch}
-            onClear={handleStructuredClear}
-          />
-        )}
+            {/* Dropdown: Polling Station - Booth */}
+            <label className="field">
+              <span>Polling station - Booth no</span>
+              <select
+                value={params.polling_station_booth ?? ''}
+                onChange={(e) => {
+                  const value = e.target.value
+                  handleStructuredChange('polling_station_booth', value)
+                }}
+              >
+                <option value="">Select polling station and booth…</option>
+                {filterOptions.options?.pollingStationBooths?.map((opt) => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
+              </select>
+            </label>
+
+            {/* Dropdown: Page No */}
+            <label className={`field ${!params.polling_station_booth ? 'field-disabled' : ''}`}>
+              <span>Page no</span>
+              <select
+                value={params.page_no ?? ''}
+                onChange={(e) => handleStructuredChange('page_no', e.target.value)}
+                disabled={!params.polling_station_booth}
+              >
+                <option value="">Select page…</option>
+                {params.polling_station_booth && filterOptions.options?.pollingStationBoothToPages?.[params.polling_station_booth]?.map((opt) => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
+              </select>
+            </label>
+
+            {/* Pass Field */}
+            <label className="field field-with-icon pass-field">
+              <span>Pass</span>
+              <div className="input-wrapper">
+                <input
+                  type="password"
+                  value={params.pass ?? ''}
+                  placeholder="Access pass"
+                  onChange={(e) => updateParams({ pass: e.target.value })}
+                />
+                <svg
+                  className="field-icon"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                  />
+                </svg>
+              </div>
+            </label>
+          </div>
+
+          <div className="form-actions">
+            <button type="submit" className="button-pill primary" disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <span className="loading-spinner" />
+                  Searching…
+                </>
+              ) : (
+                <>
+                  <svg
+                    width="16"
+                    height="16"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                    />
+                  </svg>
+                  Search
+                </>
+              )}
+            </button>
+            <button
+              type="button"
+              className="button-pill secondary"
+              onClick={handleClear}
+              disabled={isLoading}
+            >
+              Clear
+            </button>
+          </div>
+        </form>
       </div>
 
       <SummaryBar

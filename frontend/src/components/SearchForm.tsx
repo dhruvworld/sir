@@ -9,17 +9,6 @@ type SearchFormProps = {
   onReset: () => void
 }
 
-const textFields: Array<{
-  name: keyof SearchParams
-  label: string
-  placeholder: string
-}> = [
-  {
-    name: 'q',
-    label: 'Smart search',
-    placeholder: 'Name, relative name, house no, EPIC no…',
-  },
-]
 
 export const SearchForm = ({
   params,
