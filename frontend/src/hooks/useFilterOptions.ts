@@ -10,6 +10,10 @@ export const useFilterOptions = () => {
   useEffect(() => {
     let cancelled = false
     const load = async () => {
+      // Defer loading to avoid blocking initial render
+      await new Promise(resolve => setTimeout(resolve, 0))
+      if (cancelled) return
+      
       setIsLoading(true)
       setError(null)
       try {

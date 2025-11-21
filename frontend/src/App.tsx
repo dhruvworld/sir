@@ -1,14 +1,16 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, lazy, Suspense } from 'react'
 import './App.css'
 import { LogsView } from './components/LogsView'
 import { ResultsActions } from './components/ResultsActions'
-import { ResultsTable } from './components/ResultsTable'
 import { SearchForm } from './components/SearchForm'
 import { StructuredSearchCard } from './components/StructuredSearchCard'
 import { SummaryBar } from './components/SummaryBar'
 import { useFilterOptions } from './hooks/useFilterOptions'
 import { useVoterSearch } from './hooks/useVoterSearch'
 import type { SearchParams } from './types'
+
+// Lazy load heavy components
+const ResultsTable = lazy(() => import('./components/ResultsTable').then(m => ({ default: m.ResultsTable })))
 
 function App() {
   // Use pathname directly in state to force re-render on change
@@ -204,7 +206,9 @@ function App() {
       {hasResults && !isLoading && (
         <>
           <ResultsActions records={data!.results} limited={limitedView} />
-          <ResultsTable records={data!.results} limited={limitedView} />
+          <Suspense fallback={<div className="loading-overlay"><div className="loading-content"><div className="loading-spinner" /><p>Loading results…</p></div></div>}>
+            <ResultsTable records={data!.results} limited={limitedView} />
+          </Suspense>
         </>
       )}
     </div>

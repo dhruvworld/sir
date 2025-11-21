@@ -48,9 +48,14 @@ export const useVoterSearch = () => {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    fetchMeta()
-      .then(setMeta)
-      .catch(() => setMeta(null))
+    // Defer meta loading to avoid blocking initial render
+    const loadMeta = async () => {
+      await new Promise(resolve => setTimeout(resolve, 0))
+      fetchMeta()
+        .then(setMeta)
+        .catch(() => setMeta(null))
+    }
+    loadMeta()
   }, [])
 
   const runSearch = useCallback(
