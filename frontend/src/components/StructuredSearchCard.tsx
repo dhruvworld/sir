@@ -80,7 +80,6 @@ export const StructuredSearchCard = ({
           <option value="">{placeholder}</option>
           {optionsList.length ? buildOptions(optionsList) : null}
         </select>
-        {helper && <small className="field-hint">{helper}</small>}
       </label>
     )
   }
