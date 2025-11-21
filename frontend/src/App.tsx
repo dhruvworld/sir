@@ -2,8 +2,6 @@ import { useCallback, useEffect, useState, lazy, Suspense } from 'react'
 import './App.css'
 import { LogsView } from './components/LogsView'
 import { ResultsActions } from './components/ResultsActions'
-import { SearchForm } from './components/SearchForm'
-import { StructuredSearchCard } from './components/StructuredSearchCard'
 import { SummaryBar } from './components/SummaryBar'
 import { useFilterOptions } from './hooks/useFilterOptions'
 import { useVoterSearch } from './hooks/useVoterSearch'
@@ -85,17 +83,8 @@ function App() {
   const { params, data, summary, meta, isLoading, error, runSearch, updateParams, reset } =
     useVoterSearch()
   const filterOptions = useFilterOptions()
-  const [searchMode, setSearchMode] = useState<'smart' | 'dropdown'>('smart')
   const hasResults = !!data && data.results.length > 0
   const limitedView = !!data?.limited
-
-  useEffect(() => {
-    if (params.polling_station_booth || params.page_no) {
-      setSearchMode('dropdown')
-    } else if (params.q) {
-      setSearchMode('smart')
-    }
-  }, [params.polling_station_booth, params.page_no, params.q])
 
   const handleStructuredChange = (
     field: 'polling_station_booth' | 'page_no' | 'pass',
@@ -121,25 +110,8 @@ function App() {
     updateParams({ [field]: value })
   }
 
-  const handleStructuredSearch = () => {
-    runSearch({
-      q: '',
-      polling_station_booth: params.polling_station_booth,
-      page_no: params.page_no,
-      pass: params.pass,
-    })
-  }
-
-  const handleStructuredClear = () => {
-    updateParams({
-      polling_station_booth: '',
-      page_no: '',
-    })
-  }
-
   const handleClear = () => {
     reset()
-    setSearchMode('smart')
   }
 
   return (
@@ -153,8 +125,8 @@ function App() {
 
       <div className="search-container">
         <form className="search-form unified-form" onSubmit={(e) => { e.preventDefault(); runSearch(); }}>
-          {filterOptions.optionsLoading && <div className="banner info">Loading dropdown values…</div>}
-          {filterOptions.optionsError && <div className="banner error">{filterOptions.optionsError}</div>}
+          {filterOptions.isLoading && <div className="banner info">Loading dropdown values…</div>}
+          {filterOptions.error && <div className="banner error">{filterOptions.error}</div>}
           
           <div className="unified-search-fields">
             {/* Smart Search Field */}
