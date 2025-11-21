@@ -99,6 +99,60 @@ def filter_dataframe(
     return filtered
 
 
+def get_names_by_area(
+    area_value: str,
+    *,
+    data: Optional[pd.DataFrame] = None,
+    area_column: str = "section_name",
+    unique: bool = True,
+    sort: bool = True,
+) -> List[str]:
+    """
+    Return all voter names that belong to a given area (e.g., section or village).
+
+    Args:
+        area_value: The raw search text representing the area.
+        data: Optional dataframe to reuse if already loaded. Falls back to load_data().
+        area_column: Which column should be inspected for the area (defaults to `section_name`).
+        unique: When True (default) repeated names are deduplicated.
+        sort: When True (default) the resulting names are returned alphabetically.
+    """
+
+    if not area_value:
+        return []
+
+    df = data if data is not None else load_data()
+
+    # Map normalized column names to their original casing as present in the dataframe.
+    normalized_columns = {column.lower(): column for column in df.columns}
+    lookup_column = area_column.strip().lower()
+
+    if lookup_column not in normalized_columns:
+        raise ValueError(
+            f"Unknown column '{area_column}'. Available columns: {', '.join(df.columns)}"
+        )
+
+    resolved_column = normalized_columns[lookup_column]
+    if "name" not in normalized_columns.values():
+        raise ValueError("Dataset is missing the required 'name' column.")
+
+    needle = area_value.strip().lower()
+    if not needle:
+        return []
+
+    mask = df[resolved_column].str.lower().str.contains(needle, na=False)
+    names = df.loc[mask, "name"].dropna()
+
+    if unique:
+        names = names.drop_duplicates()
+
+    result = names.tolist()
+    if sort:
+        result.sort(key=lambda value: value.lower())
+
+    return result
+
+
 def dataframe_to_response(df: pd.DataFrame, limit: Optional[int]) -> List[Dict]:
     if limit is not None and limit > 0:
         df = df.head(limit)
