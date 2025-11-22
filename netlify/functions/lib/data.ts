@@ -25,7 +25,8 @@ export type VoterRecord = {
 
 let cache: VoterRecord[] | null = null
 let cacheTimestamp: number = 0
-const CACHE_TTL = 5 * 60 * 1000 // 5 minutes cache
+// Increased cache TTL to 30 minutes since data doesn't change often
+const CACHE_TTL = 30 * 60 * 1000 // 30 minutes cache
 
 const resolveDataPath = (): string => {
   const root = process.env.LAMBDA_TASK_ROOT
@@ -42,6 +43,8 @@ export const loadVoters = (): VoterRecord[] => {
   }
   
   const filePath = resolveDataPath()
+  // Use synchronous read for now, but with better caching
+  // In production, consider using streaming JSON parser for very large files
   const raw = fs.readFileSync(filePath, 'utf-8')
   cache = JSON.parse(raw)
   cacheTimestamp = now

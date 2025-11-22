@@ -432,6 +432,7 @@ export const handler: Handler = async (event) => {
     headers: {
       'Content-Type': 'application/json',
       'Access-Control-Allow-Origin': '*',
+      'Cache-Control': 'no-cache', // Search results shouldn't be cached
     },
     body: JSON.stringify({
       total,

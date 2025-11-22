@@ -10,8 +10,7 @@ export const useFilterOptions = () => {
   useEffect(() => {
     let cancelled = false
     const load = async () => {
-      // Defer loading to avoid blocking initial render
-      await new Promise(resolve => setTimeout(resolve, 0))
+      // Start loading immediately (no defer) since we have caching now
       if (cancelled) return
       
       setIsLoading(true)
@@ -21,7 +20,7 @@ export const useFilterOptions = () => {
         if (!cancelled) {
           setOptions(response)
         }
-      } catch {
+      } catch (err) {
         if (!cancelled) {
           setError('Unable to load dropdown values right now.')
         }

@@ -35,20 +35,61 @@ export const searchVoters = async (params: SearchParams): Promise<SearchResponse
   return response.json()
 }
 
+// Cache meta in memory
+let metaCache: { total_records: number } | null = null
+let metaCacheTime: number = 0
+const META_CACHE_DURATION = 30 * 60 * 1000 // 30 minutes
+
 export const fetchMeta = async (): Promise<{ total_records: number }> => {
-  const response = await fetch(buildEndpoint('/meta'))
+  const now = Date.now()
+  
+  // Return cached meta if available and fresh
+  if (metaCache && (now - metaCacheTime) < META_CACHE_DURATION) {
+    return metaCache
+  }
+  
+  const response = await fetch(buildEndpoint('/meta'), {
+    cache: 'default',
+  })
   if (!response.ok) {
     throw new Error('Unable to fetch dataset metadata.')
   }
-  return response.json()
+  const data = await response.json()
+  
+  // Cache the response
+  metaCache = data
+  metaCacheTime = now
+  
+  return data
 }
 
+// Cache options in memory to avoid repeated requests
+let optionsCache: FilterOptionsResponse | null = null
+let optionsCacheTime: number = 0
+const OPTIONS_CACHE_DURATION = 30 * 60 * 1000 // 30 minutes
+
 export const fetchFilterOptions = async (): Promise<FilterOptionsResponse> => {
-  const response = await fetch(buildEndpoint('/options'))
+  const now = Date.now()
+  
+  // Return cached options if available and fresh
+  if (optionsCache && (now - optionsCacheTime) < OPTIONS_CACHE_DURATION) {
+    return optionsCache
+  }
+  
+  const response = await fetch(buildEndpoint('/options'), {
+    // Use browser cache if available
+    cache: 'default',
+  })
   if (!response.ok) {
     throw new Error('Unable to load dropdown values.')
   }
-  return response.json()
+  const data = await response.json()
+  
+  // Cache the response
+  optionsCache = data
+  optionsCacheTime = now
+  
+  return data
 }
 
 export const logSearchEvent = async (payload: SearchLogPayload): Promise<void> => {
