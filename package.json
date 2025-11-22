@@ -19,6 +19,10 @@
   "homepage": "https://github.com/dhruvworld/sir#readme",
   "description": "",
   "dependencies": {
-    "@netlify/blobs": "^10.3.3"
+    "@netlify/blobs": "^10.3.3",
+    "@netlify/functions": "^2.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0"
   }
 }
