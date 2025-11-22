@@ -1,39 +1,41 @@
 import type { Handler } from '@netlify/functions'
-import { loadVoters } from './lib/data'
+import fs from 'node:fs'
+import path from 'node:path'
 
-// Cache meta since it doesn't change often
+// Pre-computed meta cache (loaded once, stays in memory)
 let cachedMeta: { total_records: number } | null = null
-let metaCacheTimestamp: number = 0
-const META_CACHE_TTL = 30 * 60 * 1000 // 30 minutes cache
 
-export const handler: Handler = async () => {
-  const now = Date.now()
-  
-  // Return cached meta if available and fresh
-  if (cachedMeta && (now - metaCacheTimestamp) < META_CACHE_TTL) {
-    return {
-      statusCode: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-        'Cache-Control': 'public, max-age=1800', // 30 minutes browser cache
-      },
-      body: JSON.stringify(cachedMeta),
-    }
+const resolveMetaPath = (): string => {
+  const root = process.env.LAMBDA_TASK_ROOT
+    ? path.join(process.env.LAMBDA_TASK_ROOT, 'data')
+    : path.join(process.cwd(), 'data')
+  return path.join(root, 'meta.json')
+}
+
+const loadMeta = (): { total_records: number } => {
+  // Return cached if already loaded
+  if (cachedMeta) {
+    return cachedMeta
   }
   
-  const voters = loadVoters()
-  cachedMeta = { total_records: voters.length }
-  metaCacheTimestamp = now
+  const filePath = resolveMetaPath()
+  const raw = fs.readFileSync(filePath, 'utf-8')
+  cachedMeta = JSON.parse(raw)
+  return cachedMeta
+}
+
+export const handler: Handler = async () => {
+  // Load pre-computed meta (instant - just reads a tiny JSON file)
+  const meta = loadMeta()
   
   return {
     statusCode: 200,
     headers: {
       'Content-Type': 'application/json',
       'Access-Control-Allow-Origin': '*',
-      'Cache-Control': 'public, max-age=1800', // 30 minutes browser cache
+      'Cache-Control': 'public, max-age=3600', // 1 hour browser cache
     },
-    body: JSON.stringify(cachedMeta),
+    body: JSON.stringify(meta),
   }
 }
 
